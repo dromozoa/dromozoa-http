@@ -29,7 +29,7 @@ local ua = http.user_agent()
 
 -- print(json.encode(ua))
 
-local req = http.request("GET", "http://vaporoid.com/")
+local req = http.request("GET", "http://localhost/")
 req:header("X-Int", 42)
 req:header("X-String", "foo")
 

@@ -49,9 +49,15 @@ function class:request(req)
     args:push("--header", shell.quote(header[1] .. ": " .. header[2]))
   end
 
-  args:push("--request", req.method, req.uri)
+  local method = req.method
+  if method == "HEAD" then
+    args:push("--head")
+  else
+    args:push("--request", shell.quote(method))
+  end
+  args:push(req.uri)
 
-  args:push([[--write-out '%{http_code}']])
+  args:push([[--write-out '%{http_code},%{content_type}']])
 
   local output = os.tmpname()
   args:push("--output", shell.quote(output))
@@ -60,7 +66,7 @@ function class:request(req)
   args:push("--dump-header", shell.quote(dump_header))
 
   local command = "curl " .. args:concat(" ")
-  -- print(command)
+  print(command)
 
   local result, what, code = shell.eval(command)
   -- print(result, what, code)
@@ -76,7 +82,10 @@ function class:request(req)
   if result == nil then
     return nil, what, code
   else
-    local res = class.super.response(tonumber(result))
+    local code, content_type  = result:match("^(%d+),(.*)")
+    local res = class.super.response(code)
+    res.headers = headers
+    res.content_type = content_type
     res.content = content
     return res
   end
