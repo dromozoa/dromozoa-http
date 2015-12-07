@@ -32,12 +32,13 @@ function class.new()
 end
 
 function class:option(name, value)
+  local options = self.options
   options[name] = value
   return self
 end
 
 function class:agent(agent)
-  return option("agent", agent)
+  return self:option("agent", agent)
 end
 
 function class:request(request)

@@ -57,7 +57,7 @@ if (defined $cgi->param("POSTDATA")) {
     ${params}{$name} = [ $cgi->param($name) ];
   }
   if (%params) {
-    $result->{content} = \%params;
+    $result->{params} = \%params;
   }
 }
 

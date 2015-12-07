@@ -15,17 +15,37 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local equal = require "dromozoa.commons.equal"
 local json = require "dromozoa.commons.json"
 local http = require "dromozoa.http"
 
--- local ua = http.user_agent()
--- ua:cookie_jar(os.tmpname())
--- ua.agent = "dromozoa-http"
-
--- local cookie_jar = os.tmpname()
+local cgi_host = "localhost"
+local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
+local cgi_uri = "http://" .. cgi_host .. cgi_path
 
 local ua = http.user_agent()
--- ua:agent("dromozoa-http")
+ua:agent("dromozoa-http")
+
+local req = http.request("GET", cgi_uri)
+local res = assert(ua:request(req))
+
+print(res.content)
+local result = assert(json.decode(res.content))
+assert(result.request_method == "GET")
+assert(result.request_uri == cgi_path)
+assert(result.env.HTTP_HOST == cgi_host)
+
+local req = http.request("GET", cgi_uri .. "?foo=17&bar=23&bar=37")
+local res = assert(ua:request(req))
+
+print(res.content)
+local result = assert(json.decode(res.content))
+assert(equal(result.params, {
+  foo = { "17" };
+  bar = { "23", "37" };
+}))
+
+os.exit()
 
 -- print(json.encode(ua))
 
