@@ -20,9 +20,6 @@ local sequence_writer = require "dromozoa.commons.sequence_writer"
 local class = {}
 
 function class.new(scheme, authority, path, query)
-  if path == nil then
-    path = "/"
-  end
   return {
     scheme = scheme;
     authority = authority;
@@ -42,18 +39,13 @@ function class:param(name, value)
 end
 
 function class:build()
-  local content = self.content
-  if content == nil then
-    local out = sequence_writer()
-    out:write(tostring(self.scheme), "://", tostring(self.authority), tostring(self.path))
-    local query = self.query
-    if query ~= nil then
-      out:write("?", tostring(query))
-    end
-    content = out:concat()
-    self.content = content
+  local out = sequence_writer()
+  out:write(self.scheme, "://", self.authority, self.path)
+  local query = self.query
+  if query ~= nil then
+    out:write("?", tostring(query))
   end
-  return content
+  return out:concat()
 end
 
 local metatable = {

@@ -43,9 +43,10 @@ function class:param(name, value)
 end
 
 function class:build()
-  local content = self.content
   local params = self.params
-  if content == nil and params ~= nil then
+  if params == nil then
+    return nil
+  else
     local out = sequence_writer()
     local first = true
     for param in params:each() do
@@ -57,11 +58,8 @@ function class:build()
       end
       out:write(encode(k), "=", encode(v))
     end
-    content = out:concat()
-    self.content = content
-    self.params = nil
+    return out:concat()
   end
-  return content
 end
 
 local metatable = {
