@@ -26,68 +26,71 @@ local cgi_uri = "http://" .. cgi_host .. cgi_path
 local ua = http.user_agent()
 ua:agent("dromozoa-http")
 
-local req = http.request("GET", cgi_uri)
-local res = assert(ua:request(req))
-
-print(res.content)
-local result = assert(json.decode(res.content))
+local request = http.request("GET", cgi_uri)
+local result = assert(json.decode(assert(ua:request(request)).content))
 assert(result.request_method == "GET")
 assert(result.request_uri == cgi_path)
 assert(result.env.HTTP_HOST == cgi_host)
+assert(result.env.HTTP_USER_AGENT == "dromozoa-http")
 
-local req = http.request("GET", cgi_uri .. "?foo=17&bar=23&bar=37")
-local res = assert(ua:request(req))
-
-print(res.content)
-local result = assert(json.decode(res.content))
+local request = http.request("GET", cgi_uri .. "?foo=17&bar=23&bar=37")
+local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, {
   foo = { "17" };
   bar = { "23", "37" };
 }))
 
-os.exit()
+local request = http.request("POST", cgi_uri)
+request:param("foo", 17)
+request:param("bar", 23)
+request:param("bar", 37)
+request:param("baz", "日本語")
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(equal(result.params, {
+  foo = { "17" };
+  bar = { "23", "37" };
+  baz = { "日本語" };
+}))
 
--- print(json.encode(ua))
+local request = http.request("POST", cgi_uri .. "/301/" .. cgi_uri)
+request:param("foo", 17)
+request:param("bar", 23)
+request:param("bar", 37)
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.request_method == "GET")
+assert(result.params == nil)
 
--- local req = http.request("PUT", "http://localhost/cgi-bin/dromozoa-http-test.cgi", "application/json; charset=UTF-8", "[17,23,37,42]")
--- local req = http.request("POST", "http://localhost/", "multipart/form-data")
--- local req = http.request("POST", "http://localhost/cgi-bin/dromozoa-http-test.cgi", "application/x-www-form-urlencoded")
-local req = http.request("GET", "http://localhost/cgi-bin/dromozoa-http-test.cgi/redirect")
--- req:header("X-Int", 42)
--- req:header("X-String", "foo")
+local request = http.request("POST", cgi_uri .. "/308/" .. cgi_uri)
+request:param("foo", 17)
+request:param("bar", 23)
+request:param("bar", 37)
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.request_method == "POST")
+assert(equal(result.params, {
+  foo = { "17" };
+  bar = { "23", "37" };
+}))
 
-req:parameter("foo", "bar")
-   -- :parameter("bar", { content_type = "text/plain; charset=UTF-8", filename = "bar.txt", content = "baz\n" })
-   :parameter("bar", "baz")
-   :parameter("bar", "baz2")
-   :parameter("baz", "日本語")
-
-print(json.encode(req))
-
-local res = ua:request(req)
-if res then
-  -- print(json.encode(res))
-  print(res.content)
-end
-
--- os.remove(cookie_jar)
-
---[[
-local res = ua:request(req)
-if res:is_success() then
-  print(res:cotnent())
-else
-  print(res:status_line())
-end
-
-local req = http.request("PUT", "", {})
-req:content_type("application/json; charset=UTF-8")
-req:content("{}")
-
-local req = http.request("POST", uri)
-req:form({
-  foo = 17;
-  bar = 23;
-  baz = 42;
+local request = http.request("POST", cgi_uri, "multipart/form-data")
+request:param("foo", 17)
+request:param("bar", 23)
+request:param("bar", 37)
+request:param("baz", {
+  content = "日本語\n";
+  content_type = "text/plain; charset=UTF-8";
+  filename = "test.txt";
 })
-]]
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(equal(result.params.foo, { "17" }))
+assert(equal(result.params.bar, { "23", "37" }))
+assert(#result.params.baz, 1)
+assert(result.params.baz[1].content == "日本語\n")
+assert(result.params.baz[1].content_type:find("text/plain", 1, true))
+assert(result.params.baz[1].content_type:find("charset=UTF-8", 1, true))
+assert(result.params.baz[1].content_disposition:find("test.txt", 1, true))
+
+local request = http.request("PUT", cgi_uri, "application/json")
+request.content = json.encode({ 17, 23, 37, 42 })
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.request_method == "PUT")
+assert(equal(json.decode(result.content), { 17, 23, 37, 42 }))

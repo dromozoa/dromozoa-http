@@ -20,6 +20,11 @@ local sequence = require "dromozoa.commons.sequence"
 local class = {}
 
 function class.new(method, uri, content_type, content)
+  if method == "POST" or method == "PUT" then
+    if content_type == nil then
+      content_type = "application/x-www-form-urlencoded"
+    end
+  end
   return {
     method = method;
     uri = uri;
@@ -34,7 +39,7 @@ function class:header(name, value)
   return self
 end
 
-function class:parameter(name, value)
+function class:param(name, value)
   local content_type = self.content_type
   local content = self.content
   if content == nil then

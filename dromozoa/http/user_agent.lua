@@ -52,9 +52,9 @@ function class:request(request)
   local commands = sequence():push("curl")
   local tmpnames = sequence()
 
-  commands:push("--silent")
-  -- commands:push("--verbose")
   commands:push("--globoff")
+  commands:push("--location")
+  commands:push("--silent")
 
   if options.agent ~= nil then
     commands:push("--user-agent", shell.quote(options.agent))
@@ -62,6 +62,10 @@ function class:request(request)
 
   if method == "HEAD" then
     commands:push("--head")
+  elseif method == "GET" then
+    --
+  elseif method == "POST" then
+    --
   else
     commands:push("--request", shell.quote(method))
   end
@@ -73,31 +77,32 @@ function class:request(request)
   if content_type ~= nil then
     if type(content) == "table" then
       if content_type == "multipart/form-data" then
-        for parameter in content:each() do
-          local k, v = parameter[1], parameter[2]
-          local tmpname = os.tmpname()
-          tmpnames:push(tmpname)
-          local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
+        for param in content:each() do
+          local k, v = param[1], param[2]
           if type(v) == "table" then
+            local tmpname = os.tmpname()
+            tmpnames:push(tmpname)
             assert(write_file(tmpname, v.content))
+
+            local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
             if v.content_type ~= nil then
               out:write(";type=\"", v.content_type, "\"")
             end
             if v.filename ~= nil then
               out:write(";filename=\"", v.filename, "\"")
             end
+            commands:push("--form", shell.quote(out:concat()))
           else
-            assert(write_file(tmpname, v))
+            commands:push("--form-string", shell.quote(k .. "=" ..v))
           end
-          commands:push("--form", shell.quote(out:concat()))
         end
       else
         local tmpname = os.tmpname()
         tmpnames:push(tmpname)
         local out = assert(io.open(tmpname, "wb"))
         local first = true
-        for parameter in content:each() do
-          local k, v = parameter[1], parameter[2]
+        for param in content:each() do
+          local k, v = param[1], param[2]
           if first then
             first = false
           else
@@ -119,14 +124,11 @@ function class:request(request)
 
   commands:push("--write-out", [['%{http_code},%{content_type}']])
 
-  -- commands:push("--trace-ascii", "/tmp/trace.txt")
-
   local tmpname = os.tmpname()
   tmpnames:push(tmpname)
   commands:push("--output", shell.quote(tmpname))
 
   local command = commands:concat(" ")
-  print(command)
   local result, what, code = shell.eval(command)
 
   local content = assert(read_file(tmpname))

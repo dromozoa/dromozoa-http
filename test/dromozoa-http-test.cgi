@@ -37,7 +37,7 @@ if ($request_uri =~ m{\.cgi/(301|302|307|308)/(.*)$}) {
   my $code = $1;
   my $uri = $2;
   print $cgi->redirect(-uri => $uri, -status => "$code $reason_3xx{$code}");
-  return;
+  exit;
 }
 
 my $result = {
@@ -54,7 +54,18 @@ if (defined $cgi->param("POSTDATA")) {
 } else {
   my %params;
   foreach my $name ($cgi->param) {
-    ${params}{$name} = [ $cgi->param($name) ];
+    my @values = $cgi->param($name);
+    foreach my $value (@values) {
+      my $info = $cgi->uploadInfo($value);
+      if ($info) {
+        $value = {
+          content => join("", <$value>),
+          content_type => $info->{"Content-Type"},
+          content_disposition => $info->{"Content-Disposition"},
+        };
+      }
+    }
+    ${params}{$name} = \@values;
   }
   if (%params) {
     $result->{params} = \%params;
