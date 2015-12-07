@@ -21,6 +21,8 @@ local sequence_writer = require "dromozoa.commons.sequence_writer"
 local shell = require "dromozoa.commons.shell"
 local write_file = require "dromozoa.commons.write_file"
 
+local form = require "dromozoa.http.form"
+
 local class = {}
 
 function class.new()
@@ -46,11 +48,11 @@ function class:request(request)
   local content_type = request.content_type
   local content = request.content
 
-  local commands = sequence()
+  local commands = sequence():push("curl")
   local tmpnames = sequence()
 
-  commands:push("curl", "--silent")
-  -- commands:push("curl", "--verbose")
+  commands:push("--silent")
+  -- commands:push("--verbose")
   commands:push("--globoff")
 
   if options.agent ~= nil then
@@ -89,6 +91,21 @@ function class:request(request)
           commands:push("--form", shell.quote(out:concat()))
         end
       else
+        local tmpname = os.tmpname()
+        tmpnames:push(tmpname)
+        local out = assert(io.open(tmpname, "wb"))
+        local first = true
+        for parameter in content:each() do
+          local k, v = parameter[1], parameter[2]
+          if first then
+            first = false
+          else
+            out:write("&")
+          end
+          out:write(form.encode(k), "=", form.encode(v))
+        end
+        out:close()
+        commands:push("--data-binary", shell.quote("@" .. tmpname))
       end
     else
       commands:push("--header", shell.quote("Content-Type: " .. content_type))
@@ -101,7 +118,7 @@ function class:request(request)
 
   commands:push("--write-out", [['%{http_code},%{content_type}']])
 
-  commands:push("--trace-ascii", "/tmp/trace.txt")
+  -- commands:push("--trace-ascii", "/tmp/trace.txt")
 
   local tmpname = os.tmpname()
   tmpnames:push(tmpname)

@@ -29,20 +29,25 @@ local ua = http.user_agent()
 
 -- print(json.encode(ua))
 
--- local req = http.request("PUT", "http://localhost/", "application/json; charset=UTF-8", "[17,23,37,42]")
-local req = http.request("POST", "http://localhost/", "multipart/form-data")
--- local req = http.request("GET", "http://localhost/")
+-- local req = http.request("PUT", "http://localhost/cgi-bin/dromozoa-http-test.cgi", "application/json; charset=UTF-8", "[17,23,37,42]")
+-- local req = http.request("POST", "http://localhost/", "multipart/form-data")
+-- local req = http.request("POST", "http://localhost/cgi-bin/dromozoa-http-test.cgi", "application/x-www-form-urlencoded")
+local req = http.request("GET", "http://localhost/cgi-bin/dromozoa-http-test.cgi/redirect")
 -- req:header("X-Int", 42)
 -- req:header("X-String", "foo")
 
 req:parameter("foo", "bar")
-   :parameter("bar", { content_type = "text/plain; charset=UTF-8", filename = "bar.txt", content = "baz\n" })
+   -- :parameter("bar", { content_type = "text/plain; charset=UTF-8", filename = "bar.txt", content = "baz\n" })
+   :parameter("bar", "baz")
+   :parameter("bar", "baz2")
+   :parameter("baz", "日本語")
 
 print(json.encode(req))
 
 local res = ua:request(req)
 if res then
-  print(json.encode(res))
+  -- print(json.encode(res))
+  print(res.content)
 end
 
 -- os.remove(cookie_jar)
