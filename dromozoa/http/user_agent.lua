@@ -102,8 +102,6 @@ function class:request(request)
     end
   end
 
---
-
   commands:push("--write-out", [['%{http_code},%{content_type}']])
 
   local tmpname = os.tmpname()
