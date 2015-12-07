@@ -18,15 +18,18 @@
 local request = require "dromozoa.http.request"
 local response = require "dromozoa.http.response"
 local query = require "dromozoa.http.query"
+local uri = require "dromozoa.http.uri"
 local user_agent = require "dromozoa.http.user_agent"
 
 local class = {
   request = request;
   response = response;
   query = query;
+  uri = uri;
   user_agent = user_agent;
 }
 
+uri.super = class
 user_agent.super = class
 
 return class
