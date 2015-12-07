@@ -48,6 +48,7 @@ function class:request(request)
   local headers = request.headers
   local content_type = request.content_type
   local content = request.content
+  local params = request.params
 
   local commands = sequence():push("curl")
   local tmpnames = sequence()
@@ -62,11 +63,7 @@ function class:request(request)
 
   if method == "HEAD" then
     commands:push("--head")
-  elseif method == "GET" then
-    --
-  elseif method == "POST" then
-    --
-  else
+  elseif method ~= "GET" and method ~= "POST" then
     commands:push("--request", shell.quote(method))
   end
   commands:push(shell.quote(uri))
@@ -75,15 +72,14 @@ function class:request(request)
     commands:push("--header", shell.quote(header[1] .. ": " .. header[2]))
   end
   if content_type ~= nil then
-    if type(content) == "table" then
+    if params ~= nil then
       if content_type == "multipart/form-data" then
-        for param in content:each() do
+        for param in params:each() do
           local k, v = param[1], param[2]
           if type(v) == "table" then
             local tmpname = os.tmpname()
             tmpnames:push(tmpname)
             assert(write_file(tmpname, v.content))
-
             local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
             if v.content_type ~= nil then
               out:write(";type=\"", v.content_type, "\"")
@@ -101,7 +97,7 @@ function class:request(request)
         tmpnames:push(tmpname)
         local out = assert(io.open(tmpname, "wb"))
         local first = true
-        for param in content:each() do
+        for param in params:each() do
           local k, v = param[1], param[2]
           if first then
             first = false
@@ -131,7 +127,11 @@ function class:request(request)
   local command = commands:concat(" ")
   local result, what, code = shell.eval(command)
 
-  local content = assert(read_file(tmpname))
+  local content = ""
+  if method ~= "HEAD" then
+    content = assert(read_file(tmpname))
+  end
+
   for tmpname in tmpnames:each() do
     os.remove(tmpname)
   end

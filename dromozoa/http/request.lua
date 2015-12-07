@@ -40,13 +40,12 @@ function class:header(name, value)
 end
 
 function class:param(name, value)
-  local content_type = self.content_type
-  local content = self.content
-  if content == nil then
-    content = sequence()
-    self.content = content
+  local params = self.params
+  if params == nil then
+    params = sequence()
+    self.params = params
   end
-  content:push({ name, value })
+  params:push({ name, value })
   return self
 end
 
