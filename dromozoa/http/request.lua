@@ -16,6 +16,8 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local sequence = require "dromozoa.commons.sequence"
+local sequence_writer = require "dromozoa.commons.sequence_writer"
+local form = require "dromozoa.http.form"
 
 local class = {}
 
@@ -35,7 +37,8 @@ function class.new(method, uri, content_type, content)
 end
 
 function class:header(name, value)
-  self.headers:push({ name, value })
+  local headers = self.headers
+  headers:push({ name, value })
   return self
 end
 
@@ -46,6 +49,28 @@ function class:param(name, value)
     self.params = params
   end
   params:push({ name, value })
+  return self
+end
+
+function class:build()
+  local content_type = self.content_type
+  local content = self.content
+  local params = self.params
+  if content_type == "application/x-www-form-urlencoded" and content == nil and params ~= nil then
+    local out = sequence_writer()
+    local first = true
+    for param in params:each() do
+      local k, v = param[1], param[2]
+      if first then
+        first = false
+      else
+        out:write("&")
+      end
+      out:write(form.encode(k), "=", form.encode(v))
+    end
+    self.content = out:concat()
+    self.params = nil
+  end
   return self
 end
 

@@ -46,6 +46,7 @@ request:param("bar", 23)
 request:param("bar", 37)
 request:param("baz", "日本語")
 local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.content_type == "application/x-www-form-urlencoded")
 assert(equal(result.params, {
   foo = { "17" };
   bar = { "23", "37" };
@@ -81,6 +82,7 @@ request:param("baz", {
   filename = "test.txt";
 })
 local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.content_type:find("multipart/form-data", 1, true) == 1)
 assert(equal(result.params.foo, { "17" }))
 assert(equal(result.params.bar, { "23", "37" }))
 assert(#result.params.baz, 1)
@@ -93,6 +95,7 @@ local request = http.request("PUT", cgi_uri, "application/json")
 request.content = json.encode({ 17, 23, 37, 42 })
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(result.request_method == "PUT")
+assert(result.content_type == "application/json")
 assert(equal(json.decode(result.content), { 17, 23, 37, 42 }))
 
 local request = http.request("HEAD", cgi_uri)

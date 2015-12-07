@@ -21,8 +21,6 @@ local sequence_writer = require "dromozoa.commons.sequence_writer"
 local shell = require "dromozoa.commons.shell"
 local write_file = require "dromozoa.commons.write_file"
 
-local form = require "dromozoa.http.form"
-
 local class = {}
 
 function class.new()
@@ -42,6 +40,8 @@ function class:agent(agent)
 end
 
 function class:request(request)
+  request:build()
+
   local options = self.options
   local method = request.method
   local uri = request.uri
@@ -72,51 +72,37 @@ function class:request(request)
     commands:push("--header", shell.quote(header[1] .. ": " .. header[2]))
   end
   if content_type ~= nil then
-    if params ~= nil then
-      if content_type == "multipart/form-data" then
-        for param in params:each() do
-          local k, v = param[1], param[2]
-          if type(v) == "table" then
-            local tmpname = os.tmpname()
-            tmpnames:push(tmpname)
-            assert(write_file(tmpname, v.content))
-            local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
-            if v.content_type ~= nil then
-              out:write(";type=\"", v.content_type, "\"")
-            end
-            if v.filename ~= nil then
-              out:write(";filename=\"", v.filename, "\"")
-            end
-            commands:push("--form", shell.quote(out:concat()))
-          else
-            commands:push("--form-string", shell.quote(k .. "=" ..v))
+    if content_type == "multipart/form-data" then
+      for param in params:each() do
+        local k, v = param[1], param[2]
+        if type(v) == "table" then
+          local tmpname = os.tmpname()
+          tmpnames:push(tmpname)
+          assert(write_file(tmpname, v.content))
+          local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
+          if v.content_type ~= nil then
+            out:write(";type=\"", v.content_type, "\"")
           end
-        end
-      else
-        local tmpname = os.tmpname()
-        tmpnames:push(tmpname)
-        local out = assert(io.open(tmpname, "wb"))
-        local first = true
-        for param in params:each() do
-          local k, v = param[1], param[2]
-          if first then
-            first = false
-          else
-            out:write("&")
+          if v.filename ~= nil then
+            out:write(";filename=\"", v.filename, "\"")
           end
-          out:write(form.encode(k), "=", form.encode(v))
+          commands:push("--form", shell.quote(out:concat()))
+        else
+          commands:push("--form-string", shell.quote(k .. "=" ..v))
         end
-        out:close()
-        commands:push("--data-binary", shell.quote("@" .. tmpname))
       end
     else
-      commands:push("--header", shell.quote("Content-Type: " .. content_type))
+      if content_type ~= "application/x-www-form-urlencoded" then
+        commands:push("--header", shell.quote("Content-Type: " .. content_type))
+      end
       local tmpname = os.tmpname()
       tmpnames:push(tmpname)
       assert(write_file(tmpname, content))
       commands:push("--data-binary", shell.quote("@" .. tmpname))
     end
   end
+
+--
 
   commands:push("--write-out", [['%{http_code},%{content_type}']])
 
