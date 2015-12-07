@@ -17,29 +17,19 @@
 
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
-local form = require "dromozoa.http.form"
+
+local function encoder(char)
+  return ("%%%02X"):format(char:byte())
+end
+
+local function encode(s)
+  return (tostring(s):gsub("[^A-Za-z0-9%-%.%_%~]", encoder))
+end
 
 local class = {}
 
-function class.new(method, uri, content_type, content)
-  if method == "POST" or method == "PUT" then
-    if content_type == nil then
-      content_type = "application/x-www-form-urlencoded"
-    end
-  end
-  return {
-    method = method;
-    uri = uri;
-    headers = sequence();
-    content_type = content_type;
-    content = content;
-  }
-end
-
-function class:header(name, value)
-  local headers = self.headers
-  headers:push({ name, value })
-  return self
+function class.new()
+  return {}
 end
 
 function class:param(name, value)
@@ -53,10 +43,9 @@ function class:param(name, value)
 end
 
 function class:build()
-  local content_type = self.content_type
   local content = self.content
   local params = self.params
-  if content_type == "application/x-www-form-urlencoded" and content == nil and params ~= nil then
+  if content == nil and params ~= nil then
     local out = sequence_writer()
     local first = true
     for param in params:each() do
@@ -66,7 +55,7 @@ function class:build()
       else
         out:write("&")
       end
-      out:write(form.encode(k), "=", form.encode(v))
+      out:write(encode(k), "=", encode(v))
     end
     content = out:concat()
     self.content = content
@@ -77,10 +66,11 @@ end
 
 local metatable = {
   __index = class;
+  __tostring = class.build;
 }
 
 return setmetatable(class, {
-  __call = function (_, method, uri, content_type, content)
-    return setmetatable(class.new(method, uri, content_type, content), metatable)
+  __call = function ()
+    return setmetatable(class.new(), metatable)
   end;
 })

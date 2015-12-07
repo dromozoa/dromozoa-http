@@ -115,7 +115,6 @@ function class:request(request)
   if method ~= "HEAD" then
     content = assert(read_file(tmpname))
   end
-
   for tmpname in tmpnames:each() do
     os.remove(tmpname)
   end

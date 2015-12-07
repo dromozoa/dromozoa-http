@@ -15,20 +15,14 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local request = require "dromozoa.http.request"
-local response = require "dromozoa.http.response"
-local query = require "dromozoa.http.query"
-local user_agent = require "dromozoa.http.user_agent"
+local http = require "dromozoa.http"
 
-local class = {
-  request = request;
-  response = response;
-  query = query;
-  user_agent = user_agent;
-}
-
-request.super = class
-response.super = class
-user_agent.super = class
-
-return class
+local query = http.query()
+query:param("foo", 17)
+query:param("bar", 23)
+query:param("bar", 37)
+query:param("baz", "日本語")
+assert(tostring(query) == "foo=17&bar=23&bar=37&baz=%E6%97%A5%E6%9C%AC%E8%AA%9E")
+assert(tostring(http.query():param("foo", "'()")) == "foo=%27%28%29")
+assert("?" .. http.query():param("foo", "bar"):build() == "?foo=bar")
+assert(("?%s"):format(http.query():param("foo", "bar")) == "?foo=bar")
