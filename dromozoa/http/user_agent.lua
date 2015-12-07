@@ -57,8 +57,9 @@ function class:request(request)
   commands:push("--location")
   commands:push("--silent")
 
-  if options.agent ~= nil then
-    commands:push("--user-agent", shell.quote(options.agent))
+  local agent = options.agent
+  if agent ~= nil then
+    commands:push("--user-agent", shell.quote(agent))
   end
 
   if method == "HEAD" then
