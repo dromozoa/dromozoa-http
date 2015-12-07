@@ -33,11 +33,13 @@ assert(result.request_uri == cgi_path)
 assert(result.env.HTTP_HOST == cgi_host)
 assert(result.env.HTTP_USER_AGENT == "dromozoa-http")
 
-local request = http.request("GET", cgi_uri .. "?foo=17&bar=23&bar=37")
+local query = http:query():param("foo", 17):param("bar", 23):param("bar", 37):param("baz", "日本語"):build()
+local request = http.request("GET", cgi_uri .. "?" .. query)
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, {
   foo = { "17" };
   bar = { "23", "37" };
+  baz = { "日本語" };
 }))
 
 local request = http.request("POST", cgi_uri)
