@@ -27,8 +27,6 @@ local class = {
   user_agent = user_agent;
 }
 
-request.super = class
-response.super = class
 user_agent.super = class
 
 return class

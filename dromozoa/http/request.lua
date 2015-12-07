@@ -17,7 +17,18 @@
 
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
-local form = require "dromozoa.http.form"
+
+local function encoder(char)
+  if char == " " then
+    return "+"
+  else
+    return ("%%%02X"):format(char:byte())
+  end
+end
+
+local function encode(s)
+  return (tostring(s):gsub("[^%*%-%.0-9A-Z_a-z]", encoder))
+end
 
 local class = {}
 
@@ -66,7 +77,7 @@ function class:build()
       else
         out:write("&")
       end
-      out:write(form.encode(k), "=", form.encode(v))
+      out:write(encode(k), "=", encode(v))
     end
     content = out:concat()
     self.content = content
