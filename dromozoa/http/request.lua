@@ -19,16 +19,29 @@ local sequence = require "dromozoa.commons.sequence"
 
 local class = {}
 
-function class.new(method, uri)
+function class.new(method, uri, content_type, content)
   return {
     method = method;
     uri = uri;
     headers = sequence();
+    content_type = content_type;
+    content = content;
   }
 end
 
-function class:header(key, value)
-  self.headers:push({ key, value })
+function class:header(name, value)
+  self.headers:push({ name, value })
+  return self
+end
+
+function class:parameter(name, value)
+  local content_type = self.content_type
+  local content = self.content
+  if content == nil then
+    content = sequence()
+    self.content = content
+  end
+  content:push({ name, value })
   return self
 end
 
@@ -37,7 +50,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, method, uri)
-    return setmetatable(class.new(method, uri), metatable)
+  __call = function (_, method, uri, content_type, content)
+    return setmetatable(class.new(method, uri, content_type, content), metatable)
   end;
 })

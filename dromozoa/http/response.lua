@@ -17,9 +17,11 @@
 
 local class = {}
 
-function class.new(code)
+function class.new(code, content_type, content)
   return {
     code = code;
+    content_type = content_type;
+    content = content;
   }
 end
 
@@ -28,7 +30,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, code)
-    return setmetatable(class.new(code), metatable)
+  __call = function (_, code, content_type, content)
+    return setmetatable(class.new(code, content_type, content), metatable)
   end;
 })

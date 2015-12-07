@@ -29,11 +29,16 @@ local ua = http.user_agent()
 
 -- print(json.encode(ua))
 
-local req = http.request("GET", "http://localhost/")
-req:header("X-Int", 42)
-req:header("X-String", "foo")
+-- local req = http.request("PUT", "http://localhost/", "application/json; charset=UTF-8", "[17,23,37,42]")
+local req = http.request("POST", "http://localhost/", "multipart/form-data")
+-- local req = http.request("GET", "http://localhost/")
+-- req:header("X-Int", 42)
+-- req:header("X-String", "foo")
 
--- print(json.encode(req))
+req:parameter("foo", "bar")
+   :parameter("bar", { content_type = "text/plain; charset=UTF-8", filename = "bar.txt", content = "baz\n" })
+
+print(json.encode(req))
 
 local res = ua:request(req)
 if res then

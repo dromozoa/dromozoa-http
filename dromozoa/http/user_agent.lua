@@ -15,10 +15,11 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local ipairs = require "dromozoa.commons.ipairs"
 local read_file = require "dromozoa.commons.read_file"
 local sequence = require "dromozoa.commons.sequence"
+local sequence_writer = require "dromozoa.commons.sequence_writer"
 local shell = require "dromozoa.commons.shell"
+local write_file = require "dromozoa.commons.write_file"
 
 local class = {}
 
@@ -28,66 +29,98 @@ function class.new()
   }
 end
 
-function class:agent(agent)
-  self.options.agent = agent
+function class:option(name, value)
+  options[name] = value
   return self
 end
 
-function class:request(req)
-  local args = sequence()
+function class:agent(agent)
+  return option("agent", agent)
+end
 
-  args:push("--verbose")
-  -- args:push("--silent")
-  args:push("--location")
+function class:request(request)
+  local options = self.options
+  local method = request.method
+  local uri = request.uri
+  local headers = request.headers
+  local content_type = request.content_type
+  local content = request.content
 
-  local agent = self.options.agent
-  if agent ~= nil then
-    args:push("--user-agent", shell.quote(agent))
+  local commands = sequence()
+  local tmpnames = sequence()
+
+  commands:push("curl", "--silent")
+  -- commands:push("curl", "--verbose")
+  commands:push("--globoff")
+
+  if options.agent ~= nil then
+    commands:push("--user-agent", shell.quote(options.agent))
   end
 
-  for _, header in ipairs(req.headers) do
-    args:push("--header", shell.quote(header[1] .. ": " .. header[2]))
-  end
-
-  local method = req.method
   if method == "HEAD" then
-    args:push("--head")
+    commands:push("--head")
   else
-    args:push("--request", shell.quote(method))
+    commands:push("--request", shell.quote(method))
   end
-  args:push(req.uri)
+  commands:push(shell.quote(uri))
 
-  args:push([[--write-out '%{http_code},%{content_type}']])
+  for header in headers:each() do
+    commands:push("--header", shell.quote(header[1] .. ": " .. header[2]))
+  end
+  if content_type ~= nil then
+    if type(content) == "table" then
+      if content_type == "multipart/form-data" then
+        for parameter in content:each() do
+          local k, v = parameter[1], parameter[2]
+          local tmpname = os.tmpname()
+          tmpnames:push(tmpname)
+          local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
+          if type(v) == "table" then
+            assert(write_file(tmpname, v.content))
+            if v.content_type ~= nil then
+              out:write(";type=\"", v.content_type, "\"")
+            end
+            if v.filename ~= nil then
+              out:write(";filename=\"", v.filename, "\"")
+            end
+          else
+            assert(write_file(tmpname, v))
+          end
+          commands:push("--form", shell.quote(out:concat()))
+        end
+      else
+      end
+    else
+      commands:push("--header", shell.quote("Content-Type: " .. content_type))
+      local tmpname = os.tmpname()
+      tmpnames:push(tmpname)
+      assert(write_file(tmpname, content))
+      commands:push("--data-binary", shell.quote("@" .. tmpname))
+    end
+  end
 
-  local output = os.tmpname()
-  args:push("--output", shell.quote(output))
+  commands:push("--write-out", [['%{http_code},%{content_type}']])
 
-  local dump_header = os.tmpname()
-  args:push("--dump-header", shell.quote(dump_header))
+  commands:push("--trace-ascii", "/tmp/trace.txt")
 
-  local command = "curl " .. args:concat(" ")
+  local tmpname = os.tmpname()
+  tmpnames:push(tmpname)
+  commands:push("--output", shell.quote(tmpname))
+
+  local command = commands:concat(" ")
   print(command)
-
   local result, what, code = shell.eval(command)
-  -- print(result, what, code)
 
-  local content = assert(read_file(output))
-  os.remove(output)
-
-  local headers = assert(read_file(dump_header))
-  os.remove(dump_header)
-
-  -- print(headers)
+  local content = assert(read_file(tmpname))
+  for tmpname in tmpnames:each() do
+    os.remove(tmpname)
+  end
 
   if result == nil then
     return nil, what, code
   else
     local code, content_type  = result:match("^(%d+),(.*)")
-    local res = class.super.response(code)
-    res.headers = headers
-    res.content_type = content_type
-    res.content = content
-    return res
+    return class.super.response(tonumber(code), content_type, content)
   end
 end
 
