@@ -39,6 +39,14 @@ function class:agent(agent)
   return self:option("agent", agent)
 end
 
+function class:authentication(authentication)
+  return self:option("authentication", authentication)
+end
+
+function class:credentials(username, password)
+  return self:option("username", username):option("password", password)
+end
+
 function class:request(request)
   request:build()
 
@@ -60,6 +68,20 @@ function class:request(request)
   local agent = options.agent
   if agent ~= nil then
     commands:push("--user-agent", shell.quote(agent))
+  end
+
+  local username = options.username
+  local password = options.password
+  if username ~= nil and password ~= nil then
+    commands:push("--user", shell.quote(username .. ":" .. password))
+    local authentication = options.authentication
+    if authentication == "basic" then
+      commands:push("--basic")
+    elseif authentication == "digest" then
+      commands:push("--digest")
+    else
+      commands:push("--anyauth")
+    end
   end
 
   if method == "HEAD" then
