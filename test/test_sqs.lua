@@ -22,30 +22,21 @@ local access_key = assert(os.getenv("AWS_ACCESS_KEY"))
 local secret_key = assert(os.getenv("AWS_SECRET_KEY"))
 
 local scheme = "https"
-local bucket = "dromozoa"
-local host = bucket .. ".s3-ap-northeast-1.amazonaws.com"
+local queue = "dromozoa"
+local host = "sqs.ap-northeast-1.amazonaws.com"
+local version = "2012-11-05"
 
 local ua = http:user_agent()
 ua:agent("dromozoa-http")
 
-local aws4 = http.aws4("ap-northeast-1", "s3")
+local aws4 = http.aws4("ap-northeast-1", "sqs")
 
-local request = http.request("GET", http.uri(scheme, host, "/"))
+local uri = http.uri(scheme, host, "/")
+    :param("Action", "GetQueueUrl")
+    :param("QueueName", queue)
+    :param("Version", version)
+local request = http.request("GET", uri)
 aws4:sign_header(request, access_key, secret_key)
 local response = ua:request(request)
 assert(response.code == 200)
-assert(response.content_type == "application/xml")
-
-local request = http.request("GET", http.uri(scheme, host, "/foo.txt"))
-aws4:sign_header(request, access_key, secret_key)
-local response = ua:request(request)
-assert(response.code == 200)
-assert(response.content == "foo\n")
-
-local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"))
-request:header("Content-Type", "text/plain; charset=UTF-8")
-request.content = "日本語\n"
-aws4:sign_header(request, access_key, secret_key)
-local response = ua:request(request)
-assert(response.code == 200)
-assert(response.content == "")
+assert(response.content_type == "text/xml")
