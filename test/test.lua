@@ -105,3 +105,7 @@ local response = assert(ua:request(request))
 assert(response.code == 200)
 assert(response.content == "")
 assert(response.content_type == "application/json; charset=UTF-8")
+
+local request = http.request("GET", http.uri("http", "localhost", cgi_path):param("test", "日本語"))
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(equal(result.params, { test = { "日本語" } }))
