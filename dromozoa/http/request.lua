@@ -67,7 +67,7 @@ function class:build()
   local content_type = self.content_type
   local content = self.content
   local params = self.params
-  if content_type == "application/x-www-form-urlencoded" and content == nil and params ~= nil then
+  if content_type ~= nil and content_type:find("^application%/x%-www%-form%-urlencoded") and content == nil and params ~= nil then
     local out = sequence_writer()
     local first = true
     for param in params:each() do
