@@ -40,6 +40,11 @@ if ($request_uri =~ m{\.cgi/(301|302|307|308)/(.*)$}) {
   exit;
 }
 
+my $set_cookie;
+if ($request_uri =~ m{\.cgi/set-cookie/(.*?)/(.*)$}) {
+  $set_cookie = $cgi->cookie(-name => $1, -value => $2);
+}
+
 my $result = {
   request_method => $cgi->request_method,
   request_uri => $request_uri,
@@ -72,4 +77,18 @@ if (defined $cgi->param("POSTDATA")) {
   }
 }
 
-print $cgi->header(-type => "application/json", -charset => "UTF-8"), JSON->new->encode($result);
+my %cookies;
+foreach my $name ($cgi->cookie) {
+  $cookies{$name} = $cgi->cookie($name);
+}
+if (%cookies) {
+  $result->{cookies} = \%cookies;
+}
+
+if ($set_cookie) {
+  print $cgi->header(-type => "application/json", -charset => "UTF-8", -cookie => $set_cookie)
+} else {
+  print $cgi->header(-type => "application/json", -charset => "UTF-8")
+}
+
+print JSON->new->encode($result);
