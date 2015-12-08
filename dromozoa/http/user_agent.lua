@@ -47,6 +47,13 @@ function class:credentials(username, password)
   return self:option("username", username):option("password", password)
 end
 
+function class:verbose(verbose)
+  if verbose == nil then
+    verbose = true
+  end
+  return self:option("verbose", verbose)
+end
+
 function class:request(request)
   request:build()
 
@@ -63,7 +70,6 @@ function class:request(request)
 
   commands:push("--globoff")
   commands:push("--location")
-  commands:push("--silent")
 
   local agent = options.agent
   if agent ~= nil then
@@ -82,6 +88,12 @@ function class:request(request)
     else
       commands:push("--anyauth")
     end
+  end
+
+  if options.verbose then
+    commands:push("--verbose")
+  else
+    commands:push("--silent")
   end
 
   if method == "HEAD" then
