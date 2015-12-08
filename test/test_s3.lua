@@ -60,3 +60,9 @@ f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
 aws4:make_authorization(request, access_key)
 assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
+
+local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
+request:header("Range", "bytes=0-9")
+aws4:sign(request, access_key, secret_key)
+assert(request.aws4.authorization == [[
+AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])

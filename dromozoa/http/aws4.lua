@@ -60,6 +60,7 @@ function class:build(request)
   this.content_sha256 = content_sha256
   request:header("x-amz-content-sha256", content_sha256)
   request:header("x-amz-date", self.datetime)
+  return self
 end
 
 function class:make_canonical_request(request)
@@ -122,6 +123,15 @@ function class:make_authorization(request, access_key)
   this.authorization = authorization
   request:header("Authorization", authorization)
   return self
+end
+
+function class:sign(request, access_key, secret_key)
+  return self
+      :build(request)
+      :make_canonical_request(request)
+      :make_string_to_sign(request)
+      :make_signature(request, secret_key)
+      :make_authorization(request, access_key)
 end
 
 local metatable = {
