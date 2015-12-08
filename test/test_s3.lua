@@ -21,6 +21,7 @@ local http = require "dromozoa.http"
 local access_key = assert(os.getenv("dromozoa_http_access_key"))
 local secret_key = assert(os.getenv("dromozoa_http_secret_key"))
 
+local scheme = "https"
 local bucket = "dromozoa"
 local host = bucket .. ".s3-ap-northeast-1.amazonaws.com"
 
@@ -29,22 +30,22 @@ ua:agent("dromozoa-http")
 
 local aws4 = http.aws4("ap-northeast-1", "s3")
 
-local request = http.request("GET", http.uri("http", host, "/"))
-aws4:sign(request, access_key, secret_key)
+local request = http.request("GET", http.uri(scheme, host, "/"))
+aws4:sign_header(request, access_key, secret_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "application/xml")
 
-local request = http.request("GET", http.uri("http", host, "/foo.txt"))
-aws4:sign(request, access_key, secret_key)
+local request = http.request("GET", http.uri(scheme, host, "/foo.txt"))
+aws4:sign_header(request, access_key, secret_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "foo\n")
 
-local request = http.request("PUT", http.uri("http", host, "/qux.txt"))
+local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"))
 request:header("Content-Type", "text/plain; charset=UTF-8")
 request.content = "日本語\n"
-aws4:sign(request, access_key, secret_key)
+aws4:sign_header(request, access_key, secret_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "")

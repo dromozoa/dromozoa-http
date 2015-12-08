@@ -126,7 +126,7 @@ function class:make_signature(request, secret_key)
   return self
 end
 
-function class:make_authorization(request, access_key)
+function class:make_header(request, access_key)
   local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256 ")
@@ -139,13 +139,17 @@ function class:make_authorization(request, access_key)
   return self
 end
 
-function class:sign(request, access_key, secret_key)
+function class:sign_header(request, access_key, secret_key)
   return self
       :build(request)
       :make_canonical_request(request)
       :make_string_to_sign(request)
       :make_signature(request, secret_key)
-      :make_authorization(request, access_key)
+      :make_header(request, access_key)
+end
+
+function class:sign_query(request, access_key, secret_key)
+  return self
 end
 
 local metatable = {
