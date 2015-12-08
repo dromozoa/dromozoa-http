@@ -45,10 +45,10 @@ end
 
 function class:build_request(request, time)
   request:build()
-  local aws4 = request.aws4
-  if aws4 == nil then
-    aws4 = {}
-    request.aws4 = aws4
+  local this = request.aws4
+  if this == nil then
+    this = {}
+    request.aws4 = this
   end
   local content = request.content
   local content_sha256
@@ -57,13 +57,13 @@ function class:build_request(request, time)
   else
     content_sha256 = sha256.hex(content)
   end
-  aws4.content_sha256 = content_sha256
+  this.content_sha256 = content_sha256
   request:header("x-amz-content-sha256", content_sha256)
   request:header("x-amz-date", self.datetime)
 end
 
 function class:build_canonical_request(request)
-  local aws4 = request.aws4
+  local this = request.aws4
   local out = sequence_writer()
   out:write(request.method, "\n")
   out:write(request.uri.path, "\n")
@@ -83,9 +83,9 @@ function class:build_canonical_request(request)
   end
   out:write("\n")
   local signed_headers = headers:concat(";")
-  aws4.signed_headers = signed_headers
+  this.signed_headers = signed_headers
   out:write(signed_headers, "\n")
-  out:write(aws4.content_sha256)
+  out:write(this.content_sha256)
   return out:concat()
 end
 
@@ -107,11 +107,11 @@ function class:build_signature(string_to_sign, secret_key)
 end
 
 function class:build_authorization(request, signature, access_key)
-  local aws4 = request.aws4
+  local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256")
   out:write(" Credential=", access_key, "/", self.scope)
-  out:write(",SignedHeaders=", aws4.signed_headers)
+  out:write(",SignedHeaders=", this.signed_headers)
   out:write(",Signature=", signature)
   return out:concat()
 end
