@@ -15,18 +15,23 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local aws4 = require "dromozoa.http.aws4"
 local request = require "dromozoa.http.request"
 local response = require "dromozoa.http.response"
 local query = require "dromozoa.http.query"
+local uri = require "dromozoa.http.uri"
 local user_agent = require "dromozoa.http.user_agent"
 
 local class = {
+  aws4 = aws4;
   request = request;
   response = response;
   query = query;
+  uri = uri;
   user_agent = user_agent;
 }
 
+uri.super = class
 user_agent.super = class
 
 return class

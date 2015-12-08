@@ -15,51 +15,37 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
-
-local function encoder(char)
-  return ("%%%02X"):format(char:byte())
-end
-
-local function encode(s)
-  return (tostring(s):gsub("[^A-Za-z0-9%-%.%_%~]", encoder))
-end
 
 local class = {}
 
-function class.new()
-  return {}
+function class.new(scheme, authority, path, query)
+  return {
+    scheme = scheme;
+    authority = authority;
+    path = path;
+    query = query;
+  }
 end
 
 function class:param(name, value)
-  local params = self.params
-  if params == nil then
-    params = sequence()
-    self.params = params
+  local query = self.query
+  if query == nil then
+    query = self.super.query()
+    self.query = query
   end
-  params:push({ name, value })
+  query:param(name, value)
   return self
 end
 
 function class:build()
-  local params = self.params
-  if params == nil then
-    return nil
-  else
-    local out = sequence_writer()
-    local first = true
-    for param in params:each() do
-      local k, v = param[1], param[2]
-      if first then
-        first = false
-      else
-        out:write("&")
-      end
-      out:write(encode(k), "=", encode(v))
-    end
-    return out:concat()
+  local out = sequence_writer()
+  out:write(self.scheme, "://", self.authority, self.path)
+  local query = self.query
+  if query ~= nil then
+    out:write("?", tostring(query))
   end
+  return out:concat()
 end
 
 local metatable = {
@@ -68,7 +54,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function ()
-    return setmetatable(class.new(), metatable)
+  __call = function (_, scheme, authority, path, query)
+    return setmetatable(class.new(scheme, authority, path, query), metatable)
   end;
 })
