@@ -24,20 +24,17 @@ local http = require "dromozoa.http"
 local access_key = "AKIAIOSFODNN7EXAMPLE"
 local secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
+local aws4 = http.aws4("us-east-1", "s3"):reset("20130524T000000Z")
+
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
 request:header("Range", "bytes=0-9")
 
-local aws4 = http.aws4("us-east-1", "s3"):reset("20130524T000000Z")
-
-aws4:build_request(request)
-
-local content_sha256 = request.aws4.content_sha256
-assert(content_sha256 == [[
+aws4:build(request)
+assert(request.aws4.content_sha256== [[
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 
-local canonical_request = aws4:build_canonical_request(request)
-local signed_headers = request.aws4.signed_headers
-assert(canonical_request == [[
+aws4:make_canonical_request(request)
+assert(request.aws4.canonical_request == [[
 GET
 /test.txt
 
@@ -49,17 +46,17 @@ x-amz-date:20130524T000000Z
 host;range;x-amz-content-sha256;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 
-local string_to_sign = aws4:build_string_to_sign(canonical_request)
-assert(string_to_sign == [[
+aws4:make_string_to_sign(request)
+assert(request.aws4.string_to_sign == [[
 AWS4-HMAC-SHA256
 20130524T000000Z
 20130524/us-east-1/s3/aws4_request
 7344ae5b7ee6c3e7e6b0fe0640412a37625d1fbfff95c48bbb2dc43964946972]])
 
-local signature = aws4:build_signature(string_to_sign, secret_key)
-assert(signature == [[
+aws4:make_signature(request, secret_key)
+assert(request.aws4.signature == [[
 f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
 
-local authorization = aws4:build_authorization(request, signature, access_key)
-assert(authorization == [[
+aws4:make_authorization(request, access_key)
+assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])

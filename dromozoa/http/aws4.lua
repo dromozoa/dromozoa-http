@@ -43,7 +43,7 @@ function class:reset(datetime)
   return self
 end
 
-function class:build_request(request, time)
+function class:build(request)
   request:build()
   local this = request.aws4
   if this == nil then
@@ -62,7 +62,7 @@ function class:build_request(request, time)
   request:header("x-amz-date", self.datetime)
 end
 
-function class:build_canonical_request(request)
+function class:make_canonical_request(request)
   local this = request.aws4
   local out = sequence_writer()
   out:write(request.method, "\n")
@@ -86,34 +86,42 @@ function class:build_canonical_request(request)
   this.signed_headers = signed_headers
   out:write(signed_headers, "\n")
   out:write(this.content_sha256)
-  return out:concat()
+  this.canonical_request = out:concat()
+  return self
 end
 
-function class:build_string_to_sign(canonical_request)
+function class:make_string_to_sign(request)
+  local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256", "\n")
   out:write(self.datetime, "\n")
   out:write(self.scope, "\n")
-  out:write(sha256.hex(canonical_request))
-  return out:concat()
+  out:write(sha256.hex(this.canonical_request))
+  this.string_to_sign = out:concat()
+  return self
 end
 
-function class:build_signature(string_to_sign, secret_key)
+function class:make_signature(request, secret_key)
+  local this = request.aws4
   local h1 = sha256.hmac("AWS4" .. secret_key, self.date, "bin")
   local h2 = sha256.hmac(h1, self.region, "bin")
   local h3 = sha256.hmac(h2, self.service, "bin")
   local h4 = sha256.hmac(h3, "aws4_request", "bin")
-  return sha256.hmac(h4, string_to_sign, "hex")
+  this.signature = sha256.hmac(h4, this.string_to_sign, "hex")
+  return self
 end
 
-function class:build_authorization(request, signature, access_key)
+function class:make_authorization(request, access_key)
   local this = request.aws4
   local out = sequence_writer()
-  out:write("AWS4-HMAC-SHA256")
-  out:write(" Credential=", access_key, "/", self.scope)
-  out:write(",SignedHeaders=", this.signed_headers)
-  out:write(",Signature=", signature)
-  return out:concat()
+  out:write("AWS4-HMAC-SHA256 ")
+  out:write("Credential=", access_key, "/", self.scope, ",")
+  out:write("SignedHeaders=", this.signed_headers, ",")
+  out:write("Signature=", this.signature)
+  local authorization = out:concat()
+  this.authorization = authorization
+  request:header("Authorization", authorization)
+  return self
 end
 
 local metatable = {
