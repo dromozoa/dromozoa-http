@@ -26,19 +26,21 @@ end
 local class = {}
 
 function class.new(region, service)
-  local t = os.time()
-  local date = os.date("!%Y%m%d", t)
-  local datetime = os.date("!%Y%m%dT%H%M%SZ", t)
-  return {
-    date = date;
-    datetime = datetime;
+  return class.reset({
     region = region;
     service = service;
-  }
+  })
 end
 
-function class:scope()
-  return self.date .. "/" .. self.region .. "/" .. self.service .. "/aws4_request"
+function class:reset(datetime)
+  if datetime == nil then
+    datetime = os.date("!%Y%m%dT%H%M%SZ")
+  end
+  local date = assert(datetime:match("^(%d+)T"))
+  self.date = date
+  self.datetime = datetime
+  self.scope = date .. "/" .. self.region .. "/" .. self.service .. "/aws4_request"
+  return self
 end
 
 function class:build_request(request, time)
@@ -91,7 +93,7 @@ function class:build_string_to_sign(canonical_request)
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256", "\n")
   out:write(self.datetime, "\n")
-  out:write(self:scope(), "\n")
+  out:write(self.scope, "\n")
   out:write(sha256.hex(canonical_request))
   return out:concat()
 end
@@ -108,7 +110,7 @@ function class:build_authorization(request, signature, access_key)
   local aws4 = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256")
-  out:write(" Credential=", access_key, "/", self:scope())
+  out:write(" Credential=", access_key, "/", self.scope)
   out:write(",SignedHeaders=", aws4.signed_headers)
   out:write(",Signature=", signature)
   return out:concat()

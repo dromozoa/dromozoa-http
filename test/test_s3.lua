@@ -27,9 +27,7 @@ local secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
 request:header("Range", "bytes=0-9")
 
-local aws4 = http.aws4("us-east-1", "s3")
-aws4.date = "20130524"
-aws4.datetime = "20130524T000000Z"
+local aws4 = http.aws4("us-east-1", "s3"):reset("20130524T000000Z")
 
 aws4:build_request(request)
 
