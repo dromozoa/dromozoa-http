@@ -15,12 +15,17 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local clone = require "dromozoa.commons.clone"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha256 = require "dromozoa.commons.sha256"
 
 local function trim(s)
   return (tostring(s):gsub("^[ \t]+", ""):gsub("[ \t]+$", ""))
+end
+
+local function compare(a, b)
+  return a[1] < b[1]
 end
 
 local class = {}
@@ -68,22 +73,31 @@ function class:make_canonical_request(request)
   local out = sequence_writer()
   out:write(request.method, "\n")
   out:write(request.uri.path, "\n")
+
   local query = request.uri.query
   if query == nil then
     out:write("\n")
   else
+    query = clone(query)
+    query.params:sort(compare)
     out:write(tostring(query), "\n")
   end
+
   local headers = sequence()
-  headers:push("host")
-  out:write("host:", request.uri.authority, "\n")
+  headers:push({ "host", request.uri.authority })
   for header in request.headers:each() do
-    local k, v = header[1]:lower(), trim(header[2])
-    headers:push(k)
-    out:write(k, ":", v, "\n")
+    headers:push({ header[1]:lower(), trim(header[2]) })
+  end
+  headers:sort(compare)
+
+  local names = sequence()
+  for header in headers:each() do
+    names:push(header[1])
+    out:write(header[1], ":", header[2], "\n")
   end
   out:write("\n")
-  local signed_headers = headers:concat(";")
+
+  local signed_headers = names:concat(";")
   this.signed_headers = signed_headers
   out:write(signed_headers, "\n")
   out:write(this.content_sha256)
