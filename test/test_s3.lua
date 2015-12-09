@@ -15,7 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local json = require "dromozoa.commons.json"
 local http = require "dromozoa.http"
 
 local access_key = assert(os.getenv("AWS_ACCESS_KEY"))
