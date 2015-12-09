@@ -84,7 +84,11 @@ function class:make_canonical_request(request)
   end
 
   local headers = sequence()
-  headers:push({ "host", request.uri.authority })
+  headers:push({ "host", trim(request.uri.authority) })
+  local content_type = request.content_type
+  if content_type ~= nil then
+    headers:push({ "content-type", trim(content_type) })
+  end
   for header in request.headers:each() do
     headers:push({ header[1]:lower(), trim(header[2]) })
   end

@@ -146,9 +146,7 @@ function class:request(request)
         end
       end
     else
-      if content_type ~= "application/x-www-form-urlencoded" then
-        commands:push("--header", shell.quote("Content-Type: " .. content_type))
-      end
+      commands:push("--header", shell.quote("Content-Type: " .. content_type))
       local tmpname = os.tmpname()
       tmpnames:push(tmpname)
       assert(write_file(tmpname, content))

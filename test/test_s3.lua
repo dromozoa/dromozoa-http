@@ -26,6 +26,7 @@ local host = bucket .. ".s3-ap-northeast-1.amazonaws.com"
 
 local ua = http:user_agent()
 ua:agent("dromozoa-http")
+-- ua:verbose()
 
 local aws4 = http.aws4("ap-northeast-1", "s3")
 
@@ -41,10 +42,17 @@ local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "foo\n")
 
-local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"))
-request:header("Content-Type", "text/plain; charset=UTF-8")
-request.content = "日本語\n"
+local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"), "text/plain; charset=UTF-8", "日本語\n" .. timestamp .. "\n")
 aws4:sign_header(request, access_key, secret_key)
+-- print(request.aws4.canonical_request)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "")
+
+local request = http.request("GET", http.uri(scheme, host, "/qux.txt"))
+aws4:sign_header(request, access_key, secret_key)
+local response = ua:request(request)
+assert(response.code == 200)
+assert(response.content_type == "text/plain; charset=UTF-8")
+assert(response.content == "日本語\n" .. timestamp .. "\n")

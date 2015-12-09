@@ -48,6 +48,7 @@ function class.new(method, uri, content_type, content)
 end
 
 function class:header(name, value)
+  assert(name ~= "Content-Type")
   local headers = self.headers
   headers:push({ name, value })
   return self
