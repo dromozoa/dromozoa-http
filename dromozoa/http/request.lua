@@ -48,6 +48,7 @@ function class.new(method, uri, content_type, content)
 end
 
 function class:header(name, value)
+  assert(name ~= "Content-Type")
   local headers = self.headers
   headers:push({ name, value })
   return self
@@ -67,17 +68,17 @@ function class:build()
   local content_type = self.content_type
   local content = self.content
   local params = self.params
-  if content_type ~= nil and content_type:find("^application%/x%-www%-form%-urlencoded") and content == nil and params ~= nil then
+  if content_type ~= "multipart/form-data"  and content == nil and params ~= nil then
     local out = sequence_writer()
     local first = true
     for param in params:each() do
-      local k, v = param[1], param[2]
+      local name, value = param[1], param[2]
       if first then
         first = false
       else
         out:write("&")
       end
-      out:write(encode(k), "=", encode(v))
+      out:write(encode(name), "=", encode(value))
     end
     content = out:concat()
     self.content = content

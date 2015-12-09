@@ -47,18 +47,18 @@ function class:authentication(authentication)
   return self:option("authentication", authentication)
 end
 
-function class:cookie(v)
-  if v == nil then
-    v = true
+function class:cookie(enabled)
+  if enabled == nil then
+    enabled = true
   end
-  return self:option("cookie", v)
+  return self:option("cookie", enabled)
 end
 
-function class:verbose(v)
-  if v == nil then
-    v = true
+function class:verbose(enabled)
+  if enabled == nil then
+    enabled = true
   end
-  return self:option("verbose", v)
+  return self:option("verbose", enabled)
 end
 
 function class:request(request)
@@ -123,32 +123,31 @@ function class:request(request)
   commands:push(shell.quote(uri))
 
   for header in headers:each() do
-    commands:push("--header", shell.quote(header[1] .. ": " .. header[2]))
+    local name, value = header[1], header[2]
+    commands:push("--header", shell.quote(name .. ": " .. value))
   end
   if content_type ~= nil then
     if content_type == "multipart/form-data" then
       for param in params:each() do
-        local k, v = param[1], param[2]
-        if type(v) == "table" then
+        local name, value = param[1], param[2]
+        if type(value) == "table" then
           local tmpname = os.tmpname()
           tmpnames:push(tmpname)
-          assert(write_file(tmpname, v.content))
-          local out = sequence_writer():write(k, "=@\"", tmpname, "\"")
-          if v.content_type ~= nil then
-            out:write(";type=\"", v.content_type, "\"")
+          assert(write_file(tmpname, value.content))
+          local out = sequence_writer():write(name, "=@\"", tmpname, "\"")
+          if value.content_type ~= nil then
+            out:write(";type=\"", value.content_type, "\"")
           end
-          if v.filename ~= nil then
-            out:write(";filename=\"", v.filename, "\"")
+          if value.filename ~= nil then
+            out:write(";filename=\"", value.filename, "\"")
           end
           commands:push("--form", shell.quote(out:concat()))
         else
-          commands:push("--form-string", shell.quote(k .. "=" ..v))
+          commands:push("--form-string", shell.quote(name .. "=" ..value))
         end
       end
     else
-      if content_type ~= "application/x-www-form-urlencoded" then
-        commands:push("--header", shell.quote("Content-Type: " .. content_type))
-      end
+      commands:push("--header", shell.quote("Content-Type: " .. content_type))
       local tmpname = os.tmpname()
       tmpnames:push(tmpname)
       assert(write_file(tmpname, content))

@@ -84,7 +84,11 @@ function class:make_canonical_request(request)
   end
 
   local headers = sequence()
-  headers:push({ "host", request.uri.authority })
+  headers:push({ "host", trim(request.uri.authority) })
+  local content_type = request.content_type
+  if content_type ~= nil then
+    headers:push({ "content-type", trim(content_type) })
+  end
   for header in request.headers:each() do
     headers:push({ header[1]:lower(), trim(header[2]) })
   end
@@ -126,7 +130,7 @@ function class:make_signature(request, secret_key)
   return self
 end
 
-function class:make_authorization(request, access_key)
+function class:make_header(request, access_key)
   local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256 ")
@@ -139,13 +143,17 @@ function class:make_authorization(request, access_key)
   return self
 end
 
-function class:sign(request, access_key, secret_key)
+function class:sign_header(request, access_key, secret_key)
   return self
       :build(request)
       :make_canonical_request(request)
       :make_string_to_sign(request)
       :make_signature(request, secret_key)
-      :make_authorization(request, access_key)
+      :make_header(request, access_key)
+end
+
+function class:sign_query(request, access_key, secret_key)
+  return self
 end
 
 local metatable = {
