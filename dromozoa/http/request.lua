@@ -72,13 +72,13 @@ function class:build()
     local out = sequence_writer()
     local first = true
     for param in params:each() do
-      local k, v = param[1], param[2]
+      local name, value = param[1], param[2]
       if first then
         first = false
       else
         out:write("&")
       end
-      out:write(encode(k), "=", encode(v))
+      out:write(encode(name), "=", encode(value))
     end
     content = out:concat()
     self.content = content
