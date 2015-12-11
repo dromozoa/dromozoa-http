@@ -68,6 +68,7 @@ function class:request(request)
 
   local options = self.options
   local cookies = self.cookies
+  local save = request.options.save
   local method = request.method
   local uri = request.uri
   local headers = request.headers
@@ -111,7 +112,8 @@ function class:request(request)
     commands:push("--cookie-jar", shell.quote(cookie_jar))
   end
 
-  if options.verbose then
+  local verbose = options.verbose
+  if verbose then
     commands:push("--verbose")
   else
     commands:push("--silent")
@@ -159,15 +161,28 @@ function class:request(request)
 
   commands:push("--write-out", [['%{http_code},%{content_type}']])
 
-  local output = os.tmpname()
-  tmpnames:push(output)
-  commands:push("--output", shell.quote(output))
+  local output
+  local content
+
+  if save then
+    commands:push("--output", shell.quote(save))
+  elseif method == "HEAD" then
+    content = ""
+    commands:push("--output", "/dev/null")
+  else
+    output = os.tmpname()
+    tmpnames:push(output)
+    commands:push("--output", shell.quote(output))
+  end
 
   local command = commands:concat(" ")
+  if verbose then
+    io.stderr:write(command, "\n"):flush()
+  end
+
   local result, what, code = shell.eval(command)
 
-  local content = ""
-  if method ~= "HEAD" then
+  if output ~= nil then
     content = assert(read_file(output))
   end
   if cookie_jar ~= nil then

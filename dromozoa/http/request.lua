@@ -39,12 +39,23 @@ function class.new(method, uri, content_type, content)
     end
   end
   return {
+    options = {};
     method = method;
     uri = uri;
     headers = sequence();
     content_type = content_type;
     content = content;
   }
+end
+
+function class:option(name, value)
+  local options = self.options
+  options[name] = value
+  return self
+end
+
+function class:save(filename)
+  return self:option("save", filename)
 end
 
 function class:header(name, value)
