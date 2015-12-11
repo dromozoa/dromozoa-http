@@ -24,10 +24,6 @@ local function trim(s)
   return (tostring(s):gsub("^[ \t]+", ""):gsub("[ \t]+$", ""))
 end
 
-local function compare(a, b)
-  return a[1] < b[1]
-end
-
 local class = {}
 
 function class.new(region, service)
@@ -78,30 +74,53 @@ function class:make_canonical_request(request)
   if query == nil then
     out:write("\n")
   else
-    query = clone(query)
-    query.params:sort(compare)
-    out:write(tostring(query), "\n")
+    local params = sequence();
+    for param in query.params:each() do
+      params:push(class.super.query.encode(param[1]) .. "=" .. class.super.query.encode(param[2]))
+    end
+    params:sort()
+    out:write(params:concat("&"), "\n")
   end
 
-  local headers = sequence()
-  headers:push({ "host", trim(request.uri.authority) })
+  local canonical_header_map = {}
+  local canonical_headers = sequence()
+
+  local canonical_header = { "host", sequence():push(trim(request.uri.authority)) }
+  canonical_header_map.host = canonical_header
+  canonical_headers:push(canonical_header)
+
   local content_type = request.content_type
   if content_type ~= nil then
-    headers:push({ "content-type", trim(content_type) })
+    local canonical_header = { "content-type", sequence():push(trim(content_type)) }
+    canonical_header_map["content-type"] = canonical_header
+    canonical_headers:push(canonical_header)
   end
-  for header in request.headers:each() do
-    headers:push({ header[1]:lower(), trim(header[2]) })
-  end
-  headers:sort(compare)
 
-  local names = sequence()
-  for header in headers:each() do
-    names:push(header[1])
-    out:write(header[1], ":", header[2], "\n")
+  for header in request.headers:each() do
+    local name, value = header[1]:lower(), trim(header[2])
+    local canonical_header = canonical_header_map[name]
+    if canonical_header == nil then
+      canonical_header = { name, sequence():push(value) }
+      canonical_header_map[name] = canonical_header
+      canonical_headers:push(canonical_header)
+    else
+      canonical_header[2]:push(value)
+    end
+  end
+
+  canonical_headers:sort(function(a, b)
+    return a[1] < b[1]
+  end)
+
+  local canonical_heasder_names = sequence()
+  for canonical_header in canonical_headers:each() do
+    local name, value = canonical_header[1], canonical_header[2]:sort():concat(",")
+    canonical_heasder_names:push(name)
+    out:write(name, ":", value, "\n")
   end
   out:write("\n")
 
-  local signed_headers = names:concat(";")
+  local signed_headers = canonical_heasder_names:concat(";")
   this.signed_headers = signed_headers
   out:write(signed_headers, "\n")
   out:write(this.content_sha256)
