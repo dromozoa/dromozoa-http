@@ -32,8 +32,7 @@ function class.new(agent)
 end
 
 function class:option(name, value)
-  local options = self.options
-  options[name] = value
+  self.options[name] = value
   return self
 end
 
@@ -67,8 +66,14 @@ function class:request(request)
   request:build()
 
   local options = self.options
+  local agent = options.agent
   local cookies = self.cookies
-  local save = request.options.save
+  local username = options.username
+  local password = options.password
+  local verbose = options.verbose
+
+  local request_options = request.options
+  local save = request_options.save
   local method = request.method
   local uri = request.uri
   local headers = request.headers
@@ -82,13 +87,10 @@ function class:request(request)
   commands:push("--globoff")
   commands:push("--location")
 
-  local agent = options.agent
   if agent ~= nil then
     commands:push("--user-agent", shell.quote(agent))
   end
 
-  local username = options.username
-  local password = options.password
   if username ~= nil and password ~= nil then
     commands:push("--user", shell.quote(username .. ":" .. password))
     local authentication = options.authentication
@@ -112,7 +114,6 @@ function class:request(request)
     commands:push("--cookie-jar", shell.quote(cookie_jar))
   end
 
-  local verbose = options.verbose
   if verbose then
     commands:push("--verbose")
   else
@@ -130,6 +131,7 @@ function class:request(request)
     local name, value = header[1], header[2]
     commands:push("--header", shell.quote(name .. ": " .. value))
   end
+
   if content_type ~= nil then
     if content_type == "multipart/form-data" then
       for param in params:each() do
@@ -163,12 +165,11 @@ function class:request(request)
 
   local output
   local content
-
-  if save then
-    commands:push("--output", shell.quote(save))
-  elseif method == "HEAD" then
+  if method == "HEAD" then
     content = ""
     commands:push("--output", "/dev/null")
+  elseif save then
+    commands:push("--output", shell.quote(save))
   else
     output = os.tmpname()
     tmpnames:push(output)
@@ -179,7 +180,6 @@ function class:request(request)
   if verbose then
     io.stderr:write(command, "\n"):flush()
   end
-
   local result, what, code = shell.eval(command)
 
   if output ~= nil then

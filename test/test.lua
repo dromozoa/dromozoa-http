@@ -17,6 +17,7 @@
 
 local equal = require "dromozoa.commons.equal"
 local json = require "dromozoa.commons.json"
+local write_file = require "dromozoa.commons.write_file"
 local http = require "dromozoa.http"
 
 local cgi_host = "localhost"
@@ -109,7 +110,7 @@ local request = http.request("GET", http.uri("http", "localhost", cgi_path):para
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, { test = { "日本語" } }))
 
-local request = http.request("GET", http.uri("http", "localhost", cgi_path):param("test", "日本語"))
+local request = http.request("GET", http.uri("http", "localhost", cgi_path))
 request:save("test.json")
 local response = assert(ua:request(request))
 assert(response.code == 200)
