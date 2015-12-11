@@ -26,7 +26,9 @@ local function encode(s)
   return (tostring(s):gsub("[^A-Za-z0-9%-%.%_%~]", encoder))
 end
 
-local class = {}
+local class = {
+  encode = encode;
+}
 
 function class.new()
   return {}

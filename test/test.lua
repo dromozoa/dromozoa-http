@@ -17,14 +17,14 @@
 
 local equal = require "dromozoa.commons.equal"
 local json = require "dromozoa.commons.json"
+local write_file = require "dromozoa.commons.write_file"
 local http = require "dromozoa.http"
 
 local cgi_host = "localhost"
 local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
 local cgi_uri = "http://" .. cgi_host .. cgi_path
 
-local ua = http.user_agent()
-ua:agent("dromozoa-http")
+local ua = http.user_agent("dromozoa-http"):fail()
 
 local request = http.request("GET", cgi_uri)
 local result = assert(json.decode(assert(ua:request(request)).content))
@@ -103,9 +103,21 @@ assert(equal(json.decode(result.content), { 17, 23, 37, 42 }))
 local request = http.request("HEAD", cgi_uri)
 local response = assert(ua:request(request))
 assert(response.code == 200)
-assert(response.content == "")
 assert(response.content_type == "application/json; charset=UTF-8")
+assert(response.content == "")
 
 local request = http.request("GET", http.uri("http", "localhost", cgi_path):param("test", "日本語"))
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, { test = { "日本語" } }))
+
+local request = http.request("GET", http.uri("http", "localhost", cgi_path))
+request:save("test.json")
+local response = assert(ua:request(request))
+assert(response.code == 200)
+assert(response.content_type == "application/json; charset=UTF-8")
+assert(response.content == nil)
+
+local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
+assert(not ua:request(request))
+
+

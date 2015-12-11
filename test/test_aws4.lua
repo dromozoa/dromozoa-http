@@ -19,7 +19,6 @@ local http = require "dromozoa.http"
 
 local access_key = "AKIAIOSFODNN7EXAMPLE"
 local secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-
 local aws4 = http.aws4("us-east-1", "s3"):reset("20130524T000000Z")
 
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
@@ -108,3 +107,28 @@ host;x-amz-content-sha256;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7]])
+
+local uri = http.uri("http", "host.foo.com", "/")
+    :param("x", "d")
+    :param("x", "b")
+    :param("x", "c")
+    :param("x", "a")
+local request = http.request("GET", uri)
+    :header("x-test", "d")
+    :header("x-test", "b")
+    :header("X-Test", "c")
+    :header("X-Test", "a")
+aws4:build(request)
+aws4:make_canonical_request(request)
+-- print(request.aws4.canonical_request)
+assert(request.aws4.canonical_request == [[
+GET
+/
+x=a&x=b&x=c&x=d
+host:host.foo.com
+x-amz-content-sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date:20130524T000000Z
+x-test:a,b,c,d
+
+host;x-amz-content-sha256;x-amz-date;x-test
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])

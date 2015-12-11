@@ -39,6 +39,7 @@ function class.new(method, uri, content_type, content)
     end
   end
   return {
+    options = {};
     method = method;
     uri = uri;
     headers = sequence();
@@ -47,10 +48,18 @@ function class.new(method, uri, content_type, content)
   }
 end
 
+function class:option(name, value)
+  self.options[name] = value
+  return self
+end
+
+function class:save(filename)
+  return self:option("save", filename)
+end
+
 function class:header(name, value)
   assert(name ~= "Content-Type")
-  local headers = self.headers
-  headers:push({ name, value })
+  self.headers:push({ name, value })
   return self
 end
 
@@ -65,10 +74,9 @@ function class:param(name, value)
 end
 
 function class:build()
-  local content_type = self.content_type
   local content = self.content
   local params = self.params
-  if content_type ~= "multipart/form-data"  and content == nil and params ~= nil then
+  if self.content_type ~= "multipart/form-data" and content == nil and params ~= nil then
     local out = sequence_writer()
     local first = true
     for param in params:each() do

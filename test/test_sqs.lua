@@ -15,7 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local xml = require "dromozoa.commons.xml"
+local xml = require "dromozoa.xml"
 local http = require "dromozoa.http"
 
 local access_key = assert(os.getenv("AWS_ACCESS_KEY"))
@@ -40,11 +40,6 @@ aws4:sign_header(request, access_key, secret_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "text/xml")
-
+-- print(response.content)
 local result = xml.decode(response.content)
-
-local NAME = 1
-local CONTENT = 3
-assert(result[CONTENT][1][NAME] == "GetQueueUrlResult")
-assert(result[CONTENT][1][CONTENT][1][NAME] == "QueueUrl")
-assert(result[CONTENT][1][CONTENT][1][CONTENT][1] == "https://sqs.ap-northeast-1.amazonaws.com/512093523674/dromozoa")
+assert(result:query("GetQueueUrlResult>QueueUrl"):text() == "https://sqs.ap-northeast-1.amazonaws.com/512093523674/dromozoa")
