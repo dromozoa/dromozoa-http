@@ -23,8 +23,7 @@ local cgi_host = "localhost"
 local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
 local cgi_uri = "http://" .. cgi_host .. cgi_path
 
-local ua = http.user_agent()
-ua:agent("dromozoa-http")
+local ua = http.user_agent("dromozoa-http")
 
 local request = http.request("GET", cgi_uri)
 local result = assert(json.decode(assert(ua:request(request)).content))

@@ -23,9 +23,11 @@ local write_file = require "dromozoa.commons.write_file"
 
 local class = {}
 
-function class.new()
+function class.new(agent)
   return {
-    options = {};
+    options = {
+      agent = agent;
+    };
   }
 end
 
@@ -188,7 +190,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function ()
-    return setmetatable(class.new(), metatable)
+  __call = function (_, agent)
+    return setmetatable(class.new(agent), metatable)
   end;
 })
