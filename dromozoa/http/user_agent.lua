@@ -20,6 +20,7 @@ local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local shell = require "dromozoa.commons.shell"
 local write_file = require "dromozoa.commons.write_file"
+local response = require "dromozoa.http.response"
 
 local class = {}
 
@@ -55,6 +56,13 @@ function class:cookie(enabled)
   return self:option("cookie", enabled)
 end
 
+function class:fail(enabled)
+  if enabled == nil then
+    enabled = true
+  end
+  return self:option("fail", enabled)
+end
+
 function class:verbose(enabled)
   if enabled == nil then
     enabled = true
@@ -70,6 +78,7 @@ function class:request(request)
   local cookies = self.cookies
   local username = options.username
   local password = options.password
+  local fail = options.fail
   local verbose = options.verbose
 
   local request_options = request.options
@@ -86,6 +95,7 @@ function class:request(request)
 
   commands:push("--globoff")
   commands:push("--location")
+  commands:push("--trace-time")
 
   if agent ~= nil then
     commands:push("--user-agent", shell.quote(agent))
@@ -112,6 +122,10 @@ function class:request(request)
       commands:push("--cookie", shell.quote(cookie_jar))
     end
     commands:push("--cookie-jar", shell.quote(cookie_jar))
+  end
+
+  if fail then
+    commands:push("--fail")
   end
 
   if verbose then
@@ -196,7 +210,7 @@ function class:request(request)
     return nil, what, code
   else
     local code, content_type  = result:match("^(%d+),(.*)")
-    return class.super.response(tonumber(code), content_type, content)
+    return response(tonumber(code), content_type, content)
   end
 end
 

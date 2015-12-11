@@ -24,7 +24,7 @@ local cgi_host = "localhost"
 local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
 local cgi_uri = "http://" .. cgi_host .. cgi_path
 
-local ua = http.user_agent("dromozoa-http")
+local ua = http.user_agent("dromozoa-http"):fail()
 
 local request = http.request("GET", cgi_uri)
 local result = assert(json.decode(assert(ua:request(request)).content))
@@ -116,3 +116,8 @@ local response = assert(ua:request(request))
 assert(response.code == 200)
 assert(response.content_type == "application/json; charset=UTF-8")
 assert(response.content == nil)
+
+local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
+assert(not ua:request(request))
+
+
