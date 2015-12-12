@@ -19,8 +19,13 @@ local base64 = require "dromozoa.commons.base64"
 local json = require "dromozoa.commons.json"
 local http = require "dromozoa.http"
 
-local consumer_key = assert(os.getenv("TWITTER_CONSUMER_KEY"))
-local consumer_secret = assert(os.getenv("TWITTER_CONSUMER_SECRET"))
+local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
+local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
+
+if consumer_key == nil then
+  io.stderr:write("no consumer key\n")
+  os.exit()
+end
 
 local scheme = "https"
 local host = "api.twitter.com"

@@ -18,8 +18,13 @@
 local xml = require "dromozoa.xml"
 local http = require "dromozoa.http"
 
-local access_key = assert(os.getenv("AWS_ACCESS_KEY"))
-local secret_key = assert(os.getenv("AWS_SECRET_KEY"))
+local access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+local secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+if access_key_id == nil then
+  io.stderr:write("no access key id \n")
+  os.exit()
+end
 
 local scheme = "https"
 local queue = "dromozoa"
@@ -36,7 +41,7 @@ local uri = http.uri(scheme, host, "/")
     :param("QueueName", queue)
     :param("Version", version)
 local request = http.request("GET", uri)
-aws4:sign_header(request, access_key, secret_key)
+aws4:sign_header(request, access_key_id, secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "text/xml")

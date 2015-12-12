@@ -78,7 +78,7 @@ x-amz-date:20130524T000000Z
 host;range;x-amz-content-sha256;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 
-local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/", http.query():param("max-keys", 2):param("prefix", "J")))
+local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/"):param("max-keys", 2):param("prefix", "J"))
 aws4:sign_header(request, access_key, secret_key)
 assert(request.aws4.canonical_request == [[
 GET
@@ -93,7 +93,7 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7]])
 
-local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/", http.query():param("prefix", "J"):param("max-keys", 2)))
+local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/"):param("prefix", "J"):param("max-keys", 2))
 aws4:sign_header(request, access_key, secret_key)
 assert(request.aws4.canonical_request == [[
 GET
