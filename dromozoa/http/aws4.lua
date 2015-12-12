@@ -19,6 +19,7 @@ local clone = require "dromozoa.commons.clone"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha256 = require "dromozoa.commons.sha256"
+local uri_query = require "dromozoa.http.uri_query"
 
 local function trim(s)
   return (tostring(s):gsub("^[ \t]+", ""):gsub("[ \t]+$", ""))
@@ -76,7 +77,7 @@ function class:make_canonical_request(request)
   else
     local params = sequence();
     for param in query.params:each() do
-      params:push(class.super.query.encode(param[1]) .. "=" .. class.super.query.encode(param[2]))
+      params:push(uri_query.encode(param[1]) .. "=" .. uri_query.encode(param[2]))
     end
     params:sort()
     out:write(params:concat("&"), "\n")
