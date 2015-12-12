@@ -16,6 +16,7 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local sequence_writer = require "dromozoa.commons.sequence_writer"
+local uri_query = require "dromozoa.http.uri_query"
 
 local class = {}
 
@@ -31,7 +32,7 @@ end
 function class:param(name, value)
   local query = self.query
   if query == nil then
-    query = self.super.query()
+    query = uri_query()
     self.query = query
   end
   query:param(name, value)
