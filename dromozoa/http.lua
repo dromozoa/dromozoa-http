@@ -17,7 +17,6 @@
 
 local aws4 = require "dromozoa.http.aws4"
 local request = require "dromozoa.http.request"
-local query = require "dromozoa.http.query"
 local uri = require "dromozoa.http.uri"
 local user_agent = require "dromozoa.http.user_agent"
 
@@ -25,11 +24,7 @@ local class = {
   user_agent = user_agent;
   request = request;
   uri = uri;
-  query = query;
   aws4 = aws4;
 }
-
-uri.super = class
-aws4.super = class
 
 return class

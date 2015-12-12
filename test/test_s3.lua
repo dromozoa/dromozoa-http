@@ -17,8 +17,13 @@
 
 local http = require "dromozoa.http"
 
-local access_key = assert(os.getenv("AWS_ACCESS_KEY"))
-local secret_key = assert(os.getenv("AWS_SECRET_KEY"))
+local access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+local secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+if access_key_id == nil then
+  io.stderr:write("no access key id\n")
+  os.exit()
+end
 
 local scheme = "https"
 local bucket = "dromozoa"
@@ -31,27 +36,27 @@ ua:agent("dromozoa-http")
 local aws4 = http.aws4("ap-northeast-1", "s3")
 
 local request = http.request("GET", http.uri(scheme, host, "/"))
-aws4:sign_header(request, access_key, secret_key)
+aws4:sign_header(request, access_key_id, secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "application/xml")
 
 local request = http.request("GET", http.uri(scheme, host, "/foo.txt"))
-aws4:sign_header(request, access_key, secret_key)
+aws4:sign_header(request, access_key_id, secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "foo\n")
 
 local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"), "text/plain; charset=UTF-8", "日本語\n" .. timestamp .. "\n")
-aws4:sign_header(request, access_key, secret_key)
+aws4:sign_header(request, access_key_id, secret_access_key)
 -- print(request.aws4.canonical_request)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "")
 
 local request = http.request("GET", http.uri(scheme, host, "/qux.txt"))
-aws4:sign_header(request, access_key, secret_key)
+aws4:sign_header(request, access_key_id, secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "text/plain; charset=UTF-8")
