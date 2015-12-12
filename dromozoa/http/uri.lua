@@ -16,6 +16,7 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local sequence_writer = require "dromozoa.commons.sequence_writer"
+local uri = require "dromozoa.commons.uri"
 local uri_query = require "dromozoa.http.uri_query"
 
 local class = {}
@@ -55,6 +56,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
+  __index = uri;
   __call = function (_, scheme, authority, path, query)
     return setmetatable(class.new(scheme, authority, path, query), metatable)
   end;
