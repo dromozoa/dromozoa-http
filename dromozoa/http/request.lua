@@ -87,7 +87,6 @@ function class:build()
     end
     content = out:concat()
     self.content = content
-    self.params = nil
   end
   return content
 end
