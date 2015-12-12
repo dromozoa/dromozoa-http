@@ -17,18 +17,9 @@
 
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
+local uri = require "dromozoa.commons.uri"
 
-local function encoder(char)
-  if char == " " then
-    return "+"
-  else
-    return ("%%%02X"):format(char:byte())
-  end
-end
-
-local function encode(s)
-  return (tostring(s):gsub("[^%*%-%.0-9A-Z_a-z]", encoder))
-end
+local encode = uri.encode_html5
 
 local class = {}
 
