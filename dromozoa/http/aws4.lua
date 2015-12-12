@@ -140,9 +140,9 @@ function class:make_string_to_sign(request)
   return self
 end
 
-function class:make_signature(request, secret_key)
+function class:make_signature(request, secret_access_key)
   local this = request.aws4
-  local h1 = sha256.hmac("AWS4" .. secret_key, self.date, "bin")
+  local h1 = sha256.hmac("AWS4" .. secret_access_key, self.date, "bin")
   local h2 = sha256.hmac(h1, self.region, "bin")
   local h3 = sha256.hmac(h2, self.service, "bin")
   local h4 = sha256.hmac(h3, "aws4_request", "bin")
@@ -150,11 +150,11 @@ function class:make_signature(request, secret_key)
   return self
 end
 
-function class:make_header(request, access_key)
+function class:make_header(request, access_key_id)
   local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256 ")
-  out:write("Credential=", access_key, "/", self.scope, ",")
+  out:write("Credential=", access_key_id, "/", self.scope, ",")
   out:write("SignedHeaders=", this.signed_headers, ",")
   out:write("Signature=", this.signature)
   local authorization = out:concat()
@@ -163,16 +163,16 @@ function class:make_header(request, access_key)
   return self
 end
 
-function class:sign_header(request, access_key, secret_key)
+function class:sign_header(request, access_key_id, secret_access_key)
   return self
       :build(request)
       :make_canonical_request(request)
       :make_string_to_sign(request)
-      :make_signature(request, secret_key)
-      :make_header(request, access_key)
+      :make_signature(request, secret_access_key)
+      :make_header(request, access_key_id)
 end
 
-function class:sign_query(request, access_key, secret_key)
+function class:sign_query(request, access_key_id, secret_access_key)
   return self
 end
 
