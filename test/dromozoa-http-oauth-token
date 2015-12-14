@@ -1,0 +1,51 @@
+#! /usr/bin/env lua
+
+-- Copyright (C) 2015 Tomoyuki Fujimori <moyu@dromozoa.com>
+--
+-- This file is part of dromozoa-http.
+--
+-- dromozoa-http is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- dromozoa-http is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
+
+local http = require "dromozoa.http"
+local oauth = require "dromozoa.http.oauth"
+
+local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
+local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
+
+local pin, access_token, access_token_secret = ...
+
+local scheme = "https"
+local host = "api.twitter.com"
+
+local ua = http.user_agent():fail():verbose()
+
+local oa = oauth(consumer_key, access_token)
+
+if pin == nil then
+  oa:param("oauth_callback", "oob")
+  local uri = http.uri(scheme, host, "/oauth/request_token")
+  local request = http.request("POST", uri)
+  oa:sign_header(request, consumer_secret, access_token_secret)
+  -- print(request.oauth.signature_base_string)
+  local response = assert(ua:request(request))
+  print(response.content)
+else
+  local uri = http.uri(scheme, host, "/oauth/access_token")
+  local request = http.request("POST", uri)
+    :param("oauth_verifier", pin)
+  oa:sign_header(request, consumer_secret, access_token_secret)
+  -- print(request.oauth.signature_base_string)
+  local response = assert(ua:request(request))
+  print(response.content)
+end
