@@ -24,15 +24,15 @@ local sha1 = require "dromozoa.commons.sha1"
 local parameters = require "dromozoa.http.parameters"
 local uri = require "dromozoa.http.uri"
 
-local oauth_signature_method = "HMAC-SHA1"
-local oauth_version = "1.0"
+local signature_method = "HMAC-SHA1"
+local version = "1.0"
 
 local class = {}
 
-function class.new(oauth_consumer_key, oauth_token)
+function class.new(consumer_key, token)
   return {
-    oauth_consumer_key = oauth_consumer_key;
-    oauth_token = oauth_token;
+    consumer_key = consumer_key;
+    token = token;
   }
 end
 
@@ -41,15 +41,15 @@ function class:param(name, value)
   return self
 end
 
-function class:reset(oauth_timestamp, oauth_nonce)
-  if oauth_timestamp == nil then
-    oauth_timestamp = os.time()
+function class:reset(timestamp, nonce)
+  if timestamp == nil then
+    timestamp = os.time()
   end
-  if oauth_nonce == nil then
-    oauth_nonce = base64.encode_url(random_bytes(32))
+  if nonce == nil then
+    nonce = base64.encode_url(random_bytes(32))
   end
-  self.oauth_timestamp = oauth_timestamp
-  self.oauth_nonce = oauth_nonce
+  self.timestamp = timestamp
+  self.nonce = nonce
   return self
 end
 
@@ -65,13 +65,13 @@ function class:make_parameter_string(request)
   local this = request.oauth
   local params = uri.query()
     :param({
-      oauth_callback = self.oauth_callback;
-      oauth_consumer_key = self.oauth_consumer_key;
-      oauth_nonce = self.oauth_nonce;
-      oauth_signature_method = oauth_signature_method;
-      oauth_timestamp = self.oauth_timestamp;
-      oauth_token = self.oauth_token;
-      oauth_version = oauth_version;
+      oauth_callback = self.callback;
+      oauth_consumer_key = self.consumer_key;
+      oauth_nonce = self.nonce;
+      oauth_signature_method = signature_method;
+      oauth_timestamp = self.timestamp;
+      oauth_token = self.token;
+      oauth_version = version;
     })
     :param(request.uri.params)
     :param(request.params)
@@ -94,12 +94,12 @@ function class:make_signature_base_string(request)
   return self
 end
 
-function class:make_signature(request, oauth_consumer_secret, oauth_token_secret)
-  if oauth_token_secret == nil then
-    oauth_token_secret = ""
+function class:make_signature(request, consumer_secret, token_secret)
+  if token_secret == nil then
+    token_secret = ""
   end
   local this = request.oauth
-  local signing_key = uri.encode(oauth_consumer_secret) .. "&" .. uri.encode(oauth_token_secret)
+  local signing_key = uri.encode(consumer_secret) .. "&" .. uri.encode(token_secret)
   this.signature = base64.encode(sha1.hmac(signing_key, this.signature_base_string, "bin"))
   return self
 end
@@ -108,14 +108,14 @@ function class:make_header(request)
   local this = request.oauth
   local oauth_params = parameters()
     :param({
-      oauth_callback = self.oauth_callback;
-      oauth_consumer_key = self.oauth_consumer_key;
-      oauth_nonce = self.oauth_nonce;
+      oauth_callback = self.callback;
+      oauth_consumer_key = self.consumer_key;
+      oauth_nonce = self.nonce;
       oauth_signature = this.signature;
-      oauth_signature_method = oauth_signature_method;
-      oauth_timestamp = self.oauth_timestamp;
-      oauth_token = self.oauth_token;
-      oauth_version = oauth_version;
+      oauth_signature_method = signature_method;
+      oauth_timestamp = self.timestamp;
+      oauth_token = self.token;
+      oauth_version = version;
     })
     :sort(function (a, b)
       return uri.encode(a[1]) < uri.encode(b[1])
@@ -135,13 +135,13 @@ function class:make_header(request)
   return self
 end
 
-function class:sign_header(request, oauth_consumer_secret, oauth_token_secret)
+function class:sign_header(request, consumer_secret, token_secret)
   return self
     :reset()
     :build(request)
     :make_parameter_string(request)
     :make_signature_base_string(request)
-    :make_signature(request, oauth_consumer_secret, oauth_token_secret)
+    :make_signature(request, consumer_secret, token_secret)
     :make_header(request)
 end
 
@@ -150,7 +150,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, oauth_consumer_key, oauth_token)
-    return setmetatable(class.new(oauth_consumer_key, oauth_token), metatable)
+  __call = function (_, consumer_key, token)
+    return setmetatable(class.new(consumer_key, token), metatable)
   end;
 })
