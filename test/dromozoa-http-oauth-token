@@ -33,7 +33,7 @@ local ua = http.user_agent():fail():verbose()
 local oa = oauth(consumer_key, access_token)
 
 if pin == nil then
-  oa.oauth_callback = "oob"
+  oa:param("oauth_callback", "oob")
   local uri = http.uri(scheme, host, "/oauth/request_token")
   local request = http.request("POST", uri)
   oa:sign_header(request, consumer_secret, access_token_secret)

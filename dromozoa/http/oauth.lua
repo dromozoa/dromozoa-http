@@ -32,6 +32,11 @@ function class.new(oauth_consumer_key, oauth_token)
   }
 end
 
+function class:param(name, value)
+  self.name = value
+  return self
+end
+
 function class:reset(oauth_timestamp, oauth_nonce)
   if oauth_timestamp == nil then
     oauth_timestamp = os.time()
