@@ -148,8 +148,7 @@ function class:request(request)
 
   if content_type ~= nil then
     if content_type == "multipart/form-data" then
-      for param in params:each() do
-        local name, value = param[1], param[2]
+      for name, value in params:each() do
         if type(value) == "table" then
           local tmpname = os.tmpname()
           tmpnames:push(tmpname)

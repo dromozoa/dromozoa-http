@@ -42,6 +42,7 @@ end
 
 local metatable = {
   __index = class;
+  __pairs = class.each;
 }
 
 return setmetatable(class, {

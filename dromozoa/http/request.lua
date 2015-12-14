@@ -20,6 +20,7 @@ local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
+local parameters = require "dromozoa.http.parameters"
 
 local class = {}
 
@@ -36,7 +37,7 @@ function class.new(method, uri, content_type, content)
     headers = sequence();
     content_type = content_type;
     content = content;
-    params = sequence();
+    params = parameters();
   }
 end
 
@@ -60,15 +61,9 @@ function class:header(that, value)
   return self
 end
 
-function class:param(that, value)
+function class:param(...)
   local params = self.params
-  if type(that) == "table" then
-    for name, value in pairs(that) do
-      params:push({ name, value })
-    end
-  else
-    params:push({ that, value })
-  end
+  params:param(...)
   return self
 end
 
@@ -80,12 +75,8 @@ function class:build()
       content = ""
     else
       local out = sequence_writer()
-      local first = true
-      for param in params:each() do
-        local name, value = param[1], param[2]
-        if first then
-          first = false
-        else
+      for name, value, i in params:each() do
+        if i > 1 then
           out:write("&")
         end
         out:write(uri.encode_html5(name), "=", uri.encode_html5(value))

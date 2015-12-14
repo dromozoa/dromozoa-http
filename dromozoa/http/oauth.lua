@@ -61,22 +61,18 @@ end
 function class:make_parameter_string(request)
   local this = request.oauth
 
-  local oauth_params = uri_query():param({
-    oauth_callback = self.oauth_callback;
-    oauth_consumer_key = self.oauth_consumer_key;
-    oauth_nonce = self.oauth_nonce;
-    oauth_signature_method = "HMAC-SHA1";
-    oauth_timestamp = self.oauth_timestamp;
-    oauth_token = self.oauth_token;
-    oauth_version = "1.0";
-  }):param(request.uri.query)
-
-  local params = request.params
-  if params ~= nil then
-    for param in params:each() do
-      oauth_params:param(param[1], param[2])
-    end
-  end
+  local oauth_params = uri_query()
+    :param({
+      oauth_callback = self.oauth_callback;
+      oauth_consumer_key = self.oauth_consumer_key;
+      oauth_nonce = self.oauth_nonce;
+      oauth_signature_method = "HMAC-SHA1";
+      oauth_timestamp = self.oauth_timestamp;
+      oauth_token = self.oauth_token;
+      oauth_version = "1.0";
+    })
+    :param(request.uri.query)
+    :param(request.params)
 
   this.oauth_params = oauth_params:sort()
   this.parameter_string = oauth_params:build()
