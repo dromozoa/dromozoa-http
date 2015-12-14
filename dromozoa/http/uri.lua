@@ -18,10 +18,10 @@
 local empty = require "dromozoa.commons.empty"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
-local uri_query = require "dromozoa.http.uri_query"
+local query = require "dromozoa.http.query"
 
 local class = {
-  query = uri_query;
+  query = query;
 }
 
 function class.new(scheme, authority, path)
@@ -29,7 +29,7 @@ function class.new(scheme, authority, path)
     scheme = scheme;
     authority = authority;
     path = path;
-    params = uri_query();
+    params = query();
   }
 end
 
