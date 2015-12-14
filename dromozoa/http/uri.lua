@@ -42,7 +42,11 @@ function class:without_query()
   return class(self.scheme, self.authority, self.path)
 end
 
-function class:build()
+local metatable = {
+  __index = class;
+}
+
+function metatable:__tostring()
   local params = self.params
   local out = sequence_writer()
   out:write(self.scheme, "://", self.authority, self.path)
@@ -51,11 +55,6 @@ function class:build()
   end
   return out:concat()
 end
-
-local metatable = {
-  __index = class;
-  __tostring = class.build;
-}
 
 return setmetatable(class, {
   __index = uri;
