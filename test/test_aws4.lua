@@ -17,8 +17,8 @@
 
 local http = require "dromozoa.http"
 
-local access_key = "AKIAIOSFODNN7EXAMPLE"
-local secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+local access_key_id = "AKIAIOSFODNN7EXAMPLE"
+local secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 local aws4 = http.aws4("us-east-1", "s3"):reset("20130524T000000Z")
 
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
@@ -48,17 +48,22 @@ AWS4-HMAC-SHA256
 20130524/us-east-1/s3/aws4_request
 7344ae5b7ee6c3e7e6b0fe0640412a37625d1fbfff95c48bbb2dc43964946972]])
 
-aws4:make_signature(request, secret_key)
+aws4:make_signature(request, secret_access_key)
 assert(request.aws4.signature == [[
 f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
 
-aws4:make_header(request, access_key)
+aws4:make_header(request, access_key_id)
 assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
 
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/test.txt"))
 request:header("Range", "bytes=0-9")
-aws4:sign_header(request, access_key, secret_key)
+aws4
+  :build(request)
+  :make_canonical_request(request)
+  :make_string_to_sign(request)
+  :make_signature(request, secret_access_key)
+  :make_header(request, access_key_id)
 assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41]])
 
@@ -79,7 +84,12 @@ host;range;x-amz-content-sha256;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]])
 
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/"):param("max-keys", 2):param("prefix", "J"))
-aws4:sign_header(request, access_key, secret_key)
+aws4
+  :build(request)
+  :make_canonical_request(request)
+  :make_string_to_sign(request)
+  :make_signature(request, secret_access_key)
+  :make_header(request, access_key_id)
 assert(request.aws4.canonical_request == [[
 GET
 /
@@ -94,7 +104,12 @@ assert(request.aws4.authorization == [[
 AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7]])
 
 local request = http.request("GET", http.uri("http", "examplebucket.s3.amazonaws.com", "/"):param("prefix", "J"):param("max-keys", 2))
-aws4:sign_header(request, access_key, secret_key)
+aws4
+  :build(request)
+  :make_canonical_request(request)
+  :make_string_to_sign(request)
+  :make_signature(request, secret_access_key)
+  :make_header(request, access_key_id)
 assert(request.aws4.canonical_request == [[
 GET
 /
@@ -118,8 +133,9 @@ local request = http.request("GET", uri)
     :header("x-test", "b")
     :header("X-Test", "c")
     :header("X-Test", "a")
-aws4:build(request)
-aws4:make_canonical_request(request)
+aws4
+  :build(request)
+  :make_canonical_request(request)
 -- print(request.aws4.canonical_request)
 assert(request.aws4.canonical_request == [[
 GET
