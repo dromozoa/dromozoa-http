@@ -27,10 +27,11 @@ end
 
 local class = {}
 
-function class.new(region, service)
+function class.new(region, service, access_key_id)
   return {
     region = region;
     service = service;
+    access_key_id = access_key_id;
   }
 end
 
@@ -140,11 +141,11 @@ function class:make_signature(request, secret_access_key)
   return self
 end
 
-function class:make_header(request, access_key_id)
+function class:make_header(request)
   local this = request.aws4
   local out = sequence_writer()
   out:write("AWS4-HMAC-SHA256 ")
-  out:write("Credential=", access_key_id, "/", self.scope, ",")
+  out:write("Credential=", self.access_key_id, "/", self.scope, ",")
   out:write("SignedHeaders=", this.signed_headers, ",")
   out:write("Signature=", this.signature)
   local authorization = out:concat()
@@ -153,14 +154,14 @@ function class:make_header(request, access_key_id)
   return self
 end
 
-function class:sign_header(request, access_key_id, secret_access_key)
+function class:sign_header(request, secret_access_key)
   return self
     :reset()
     :build(request)
     :make_canonical_request(request)
     :make_string_to_sign(request)
     :make_signature(request, secret_access_key)
-    :make_header(request, access_key_id)
+    :make_header(request, self.access_key_id)
 end
 
 local metatable = {
@@ -168,7 +169,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, region, service)
-    return setmetatable(class.new(region, service), metatable)
+  __call = function (_, region, service, access_key_id)
+    return setmetatable(class.new(region, service, access_key_id), metatable)
   end;
 })
