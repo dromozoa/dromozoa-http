@@ -34,7 +34,7 @@ function class.new(method, uri, content_type, content)
     options = {};
     method = method;
     uri = uri;
-    headers = sequence();
+    headers = parameters();
     content_type = content_type;
     content = content;
     form = parameters();
@@ -50,14 +50,9 @@ function class:save(filename)
   return self:option("save", filename)
 end
 
-function class:header(that, value)
-  if type(that) == "table" then
-    for name, value in pairs(that) do
-      self.headers:push({ name, value })
-    end
-  else
-    self.headers:push({ that, value })
-  end
+function class:header(...)
+  local headers = self.headers
+  headers:param(...)
   return self
 end
 

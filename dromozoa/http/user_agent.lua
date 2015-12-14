@@ -141,8 +141,7 @@ function class:request(request)
   end
   commands:push(shell.quote(uri))
 
-  for header in headers:each() do
-    local name, value = header[1], header[2]
+  for name, value in headers:each() do
     commands:push("--header", shell.quote(name .. ": " .. value))
   end
 

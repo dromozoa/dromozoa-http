@@ -88,8 +88,8 @@ function class:make_canonical_request(request)
     canonical_headers:push(canonical_header)
   end
 
-  for header in request.headers:each() do
-    local name, value = header[1]:lower(), trim(header[2])
+  for name, value in request.headers:each() do
+    local name, value = name:lower(), trim(value)
     local canonical_header = canonical_header_map[name]
     if canonical_header == nil then
       canonical_header = { name, sequence():push(value) }
