@@ -139,6 +139,16 @@ function class:make_header(request)
   return self
 end
 
+function class:sign_header(request, oauth_consumer_secret, oauth_token_secret)
+  return self
+    :reset()
+    :build(request)
+    :make_parameter_string(request)
+    :make_signature_base_string(request)
+    :make_signature(request, oauth_consumer_secret, oauth_token_secret)
+    :make_header(request)
+end
+
 local metatable = {
   __index = class;
 }
