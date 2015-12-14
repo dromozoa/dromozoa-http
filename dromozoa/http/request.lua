@@ -17,18 +17,7 @@
 
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
-
-local function encoder(char)
-  if char == " " then
-    return "+"
-  else
-    return ("%%%02X"):format(char:byte())
-  end
-end
-
-local function encode(s)
-  return (tostring(s):gsub("[^%*%-%.0-9A-Z_a-z]", encoder))
-end
+local uri = require "dromozoa.commons.uri"
 
 local class = {}
 
@@ -57,6 +46,10 @@ function class:save(filename)
   return self:option("save", filename)
 end
 
+function class:encode(encode)
+  return self:option("encode", encode)
+end
+
 function class:header(name, value)
   assert(name ~= "Content-Type")
   self.headers:push({ name, value })
@@ -77,6 +70,10 @@ function class:build()
   local content = self.content
   local params = self.params
   if self.content_type ~= "multipart/form-data" and content == nil and params ~= nil then
+    local encode = self.options.encode
+    if encode == nil then
+      encode = uri.encode_html5
+    end
     local out = sequence_writer()
     local first = true
     for param in params:each() do
@@ -90,7 +87,6 @@ function class:build()
     end
     content = out:concat()
     self.content = content
-    self.params = nil
   end
   return content
 end

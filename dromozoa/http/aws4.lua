@@ -19,7 +19,7 @@ local clone = require "dromozoa.commons.clone"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha256 = require "dromozoa.commons.sha256"
-local uri_query = require "dromozoa.http.uri_query"
+local uri = require "dromozoa.commons.uri"
 
 local function trim(s)
   return (tostring(s):gsub("^[ \t]+", ""):gsub("[ \t]+$", ""))
@@ -28,10 +28,10 @@ end
 local class = {}
 
 function class.new(region, service)
-  return class.reset({
+  return {
     region = region;
     service = service;
-  })
+  }
 end
 
 function class:reset(datetime)
@@ -77,7 +77,7 @@ function class:make_canonical_request(request)
   else
     local params = sequence();
     for param in query.params:each() do
-      params:push(uri_query.encode(param[1]) .. "=" .. uri_query.encode(param[2]))
+      params:push(uri.encode(param[1]) .. "=" .. uri.encode(param[2]))
     end
     params:sort()
     out:write(params:concat("&"), "\n")
@@ -165,15 +165,12 @@ end
 
 function class:sign_header(request, access_key_id, secret_access_key)
   return self
-      :build(request)
-      :make_canonical_request(request)
-      :make_string_to_sign(request)
-      :make_signature(request, secret_access_key)
-      :make_header(request, access_key_id)
-end
-
-function class:sign_query(request, access_key_id, secret_access_key)
-  return self
+    :reset()
+    :build(request)
+    :make_canonical_request(request)
+    :make_string_to_sign(request)
+    :make_signature(request, secret_access_key)
+    :make_header(request, access_key_id)
 end
 
 local metatable = {
