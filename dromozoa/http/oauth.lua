@@ -22,6 +22,18 @@ local sha1 = require "dromozoa.commons.sha1"
 local parameters = require "dromozoa.http.parameters"
 local uri = require "dromozoa.http.uri"
 
+local function make_params(self, params)
+  return params:param({
+    oauth_callback = self.callback;
+    oauth_consumer_key = self.consumer_key;
+    oauth_nonce = self.nonce;
+    oauth_signature_method = "HMAC-SHA1";
+    oauth_timestamp = self.timestamp;
+    oauth_token = self.token;
+    oauth_version = "1.0";
+  })
+end
+
 local class = {}
 
 function class.new(consumer_key, token)
@@ -48,18 +60,6 @@ function class:reset(timestamp, nonce)
   return self
 end
 
-function class:make_params(params)
-  return params:param({
-    oauth_callback = self.callback;
-    oauth_consumer_key = self.consumer_key;
-    oauth_nonce = self.nonce;
-    oauth_signature_method = "HMAC-SHA1";
-    oauth_timestamp = self.timestamp;
-    oauth_token = self.token;
-    oauth_version = "1.0";
-  })
-end
-
 function class:build(request)
   request:build()
   if request.oauth == nil then
@@ -70,7 +70,7 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-  local params = self:make_params(uri.query())
+  local params = make_params(self, uri.query())
     :param(request.uri.params)
     :param(request.params)
     :sort()
@@ -102,7 +102,7 @@ end
 
 function class:make_header(request)
   local this = request.oauth
-  local params = self:make_params(parameters())
+  local params = make_params(self, parameters())
     :param("oauth_signature", this.signature)
     :sort(function (a, b)
       return uri.encode(a[1]) < uri.encode(b[1])

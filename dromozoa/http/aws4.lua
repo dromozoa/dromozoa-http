@@ -19,7 +19,6 @@ local clone = require "dromozoa.commons.clone"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha256 = require "dromozoa.commons.sha256"
-local uri = require "dromozoa.commons.uri"
 
 local function trim(s)
   return (tostring(s):gsub("^[ \t]+", ""):gsub("[ \t]+$", ""))
@@ -53,13 +52,7 @@ function class:build(request)
     this = {}
     request.aws4 = this
   end
-  local content = request.content
-  local content_sha256
-  if content == nil then
-    content_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  else
-    content_sha256 = sha256.hex(content)
-  end
+  local content_sha256 = sha256.hex(request.content)
   this.content_sha256 = content_sha256
   request
     :header("x-amz-content-sha256", content_sha256)
@@ -70,9 +63,9 @@ end
 function class:make_canonical_request(request)
   local this = request.aws4
   local out = sequence_writer()
-  out:write(request.method, "\n")
-  out:write(request.uri.path, "\n")
-  out:write(tostring(clone(request.uri.params):sort()), "\n")
+    :write(request.method, "\n")
+    :write(request.uri.path, "\n")
+    :write(tostring(clone(request.uri.params):sort()), "\n")
 
   local canonical_header_map = {}
   local canonical_headers = sequence()
@@ -104,30 +97,31 @@ function class:make_canonical_request(request)
     return a[1] < b[1]
   end)
 
-  local canonical_heasder_names = sequence()
+  local canonical_header_names = sequence()
   for canonical_header in canonical_headers:each() do
     local name, value = canonical_header[1], canonical_header[2]:sort():concat(",")
-    canonical_heasder_names:push(name)
+    canonical_header_names:push(name)
     out:write(name, ":", value, "\n")
   end
   out:write("\n")
 
-  local signed_headers = canonical_heasder_names:concat(";")
+  local signed_headers = canonical_header_names:concat(";")
   this.signed_headers = signed_headers
-  out:write(signed_headers, "\n")
-  out:write(this.content_sha256)
-  this.canonical_request = out:concat()
+  this.canonical_request = out
+    :write(signed_headers, "\n")
+    :write(this.content_sha256)
+    :concat()
   return self
 end
 
 function class:make_string_to_sign(request)
   local this = request.aws4
-  local out = sequence_writer()
-  out:write("AWS4-HMAC-SHA256", "\n")
-  out:write(self.datetime, "\n")
-  out:write(self.scope, "\n")
-  out:write(sha256.hex(this.canonical_request))
-  this.string_to_sign = out:concat()
+  this.string_to_sign = sequence_writer()
+    :write("AWS4-HMAC-SHA256", "\n")
+    :write(self.datetime, "\n")
+    :write(self.scope, "\n")
+    :write(sha256.hex(this.canonical_request))
+    :concat()
   return self
 end
 
@@ -143,12 +137,12 @@ end
 
 function class:make_header(request)
   local this = request.aws4
-  local out = sequence_writer()
-  out:write("AWS4-HMAC-SHA256 ")
-  out:write("Credential=", self.access_key_id, "/", self.scope, ",")
-  out:write("SignedHeaders=", this.signed_headers, ",")
-  out:write("Signature=", this.signature)
-  local authorization = out:concat()
+  local authorization = sequence_writer()
+    :write("AWS4-HMAC-SHA256 ")
+    :write("Credential=", self.access_key_id, "/", self.scope, ",")
+    :write("SignedHeaders=", this.signed_headers, ",")
+    :write("Signature=", this.signature)
+    :concat()
   this.authorization = authorization
   request:header("Authorization", authorization)
   return self
