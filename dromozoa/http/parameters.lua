@@ -16,6 +16,7 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local ipairs = require "dromozoa.commons.ipairs"
+local linked_hash_table = require "dromozoa.commons.linked_hash_table"
 local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
 
@@ -38,6 +39,16 @@ function class:each()
       coroutine.yield(param[1], param[2], i)
     end
   end)
+end
+
+function class:to_map(that)
+  if that == nil then
+    that = linked_hash_table()
+  end
+  for name, value in self:each() do
+    that[name] = value
+  end
+  return that
 end
 
 local metatable = {
