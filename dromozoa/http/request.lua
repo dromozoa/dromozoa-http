@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local empty = require "dromozoa.commons.empty"
 local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
@@ -35,6 +36,7 @@ function class.new(method, uri, content_type, content)
     headers = sequence();
     content_type = content_type;
     content = content;
+    params = sequence();
   }
 end
 
@@ -60,10 +62,6 @@ end
 
 function class:param(that, value)
   local params = self.params
-  if params == nil then
-    params = sequence()
-    self.params = params
-  end
   if type(that) == "table" then
     for name, value in pairs(that) do
       params:push({ name, value })
@@ -78,7 +76,7 @@ function class:build()
   local content = self.content
   local params = self.params
   if self.content_type ~= "multipart/form-data" and content == nil then
-    if params == nil then
+    if empty(params) then
       content = ""
     else
       local out = sequence_writer()

@@ -69,14 +69,7 @@ function class:make_parameter_string(request)
     oauth_timestamp = self.oauth_timestamp;
     oauth_token = self.oauth_token;
     oauth_version = "1.0";
-  })
-
-  local query = request.uri.query
-  if query ~= nil then
-    for param in query.params:each() do
-      oauth_params:param(param[1], param[2])
-    end
-  end
+  }):param(request.uri.query)
 
   local params = request.params
   if params ~= nil then
@@ -93,7 +86,7 @@ end
 function class:make_signature_base_string(request)
   local this = request.oauth
   local url = clone(request.uri)
-  url.query = nil
+  url.query = uri_query()
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")

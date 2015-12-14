@@ -15,71 +15,45 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence = require "dromozoa.commons.sequence"
+local empty = require "dromozoa.commons.empty"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
+local parameters = require "dromozoa.http.parameters"
 
-local function encode(param)
-  return uri.encode(param[1]) .. "=" .. uri.encode(param[2])
+local function encode(name, value)
+  return uri.encode(name) .. "=" .. uri.encode(value)
 end
 
 local function compare(a, b)
-  return encode(a) < encode(b)
+  return encode(a[1], a[2]) < encode(b[1], b[2])
 end
 
 local class = {}
 
-function class.new()
-  return {}
-end
-
-function class:param(that, value)
-  local params = self.params
-  if params == nil then
-    params = sequence()
-    self.params = params
-  end
-  if type(that) == "table" then
-    for name, value in pairs(that) do
-      params:push({ name, value })
-    end
-  else
-    params:push({ that, value })
-  end
-  return self
-end
-
 function class:sort()
-  local params = self.params
-  params:sort(compare)
+  parameters.sort(self, compare)
   return self
 end
 
 function class:build()
-  local params = self.params
-  if params == nil then
-    return nil
-  else
-    local out = sequence_writer()
-    local first = true
-    for param in params:each() do
-      if first then
-        first = false
-      else
-        out:write("&")
-      end
-      out:write(encode(param))
+  local out = sequence_writer()
+  for name, value, i in self:each() do
+    if i > 1 then
+      out:write("&")
     end
-    return out:concat()
+    out:write(encode(name, value))
   end
+  return out:concat()
 end
 
 local metatable = {
   __index = class;
   __tostring = class.build;
+  __pairs = parameters.each;
 }
 
 return setmetatable(class, {
+  __index = parameters;
   __call = function ()
     return setmetatable(class.new(), metatable)
   end;

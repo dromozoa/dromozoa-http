@@ -72,12 +72,7 @@ function class:make_canonical_request(request)
   out:write(request.method, "\n")
   out:write(request.uri.path, "\n")
 
-  local query = request.uri.query
-  if query == nil then
-    out:write("\n")
-  else
-    out:write(clone(query):sort():build(), "\n")
-  end
+  out:write(clone(request.uri.query):sort():build(), "\n")
 
   local canonical_header_map = {}
   local canonical_headers = sequence()
