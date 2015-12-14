@@ -15,8 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local empty = require "dromozoa.commons.empty"
-local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
@@ -51,14 +49,12 @@ function class:save(filename)
 end
 
 function class:header(...)
-  local headers = self.headers
-  headers:param(...)
+  self.headers:param(...)
   return self
 end
 
 function class:param(...)
-  local params = self.params
-  params:param(...)
+  self.params:param(...)
   return self
 end
 
@@ -66,18 +62,14 @@ function class:build()
   local content = self.content
   local params = self.params
   if self.content_type ~= "multipart/form-data" and content == nil then
-    if empty(params) then
-      content = ""
-    else
-      local out = sequence_writer()
-      for name, value, i in params:each() do
-        if i > 1 then
-          out:write("&")
-        end
-        out:write(uri.encode_html5(name), "=", uri.encode_html5(value))
+    local out = sequence_writer()
+    for name, value, i in params:each() do
+      if i > 1 then
+        out:write("&")
       end
-      content = out:concat()
+      out:write(uri.encode_html5(name), "=", uri.encode_html5(value))
     end
+    content = out:concat()
     self.content = content
   end
   return content

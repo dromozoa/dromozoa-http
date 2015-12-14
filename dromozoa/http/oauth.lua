@@ -21,9 +21,11 @@ local random_bytes = require "dromozoa.commons.random_bytes"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
-local uri = require "dromozoa.commons.uri"
 local parameters = require "dromozoa.http.parameters"
-local uri_query = require "dromozoa.http.uri_query"
+local uri = require "dromozoa.http.uri"
+
+local oauth_signature_method = "HMAC-SHA1"
+local oauth_version = "1.0"
 
 local class = {}
 
@@ -61,27 +63,27 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-  local oauth_params = uri_query()
+  local params = uri.query()
     :param({
       oauth_callback = self.oauth_callback;
       oauth_consumer_key = self.oauth_consumer_key;
       oauth_nonce = self.oauth_nonce;
-      oauth_signature_method = "HMAC-SHA1";
+      oauth_signature_method = oauth_signature_method;
       oauth_timestamp = self.oauth_timestamp;
       oauth_token = self.oauth_token;
-      oauth_version = "1.0";
+      oauth_version = oauth_version;
     })
     :param(request.uri.params)
     :param(request.params)
     :sort()
-  this.parameter_string = tostring(oauth_params)
+  this.parameter_string = tostring(params)
   return self
 end
 
 function class:make_signature_base_string(request)
   local this = request.oauth
   local url = clone(request.uri)
-  url.params = uri_query()
+  url.params = url.query()
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")
@@ -110,10 +112,10 @@ function class:make_header(request)
       oauth_consumer_key = self.oauth_consumer_key;
       oauth_nonce = self.oauth_nonce;
       oauth_signature = this.signature;
-      oauth_signature_method = "HMAC-SHA1";
+      oauth_signature_method = oauth_signature_method;
       oauth_timestamp = self.oauth_timestamp;
       oauth_token = self.oauth_token;
-      oauth_version = "1.0";
+      oauth_version = oauth_version;
     })
     :sort(function (a, b)
       return uri.encode(a[1]) < uri.encode(b[1])

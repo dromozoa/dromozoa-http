@@ -20,7 +20,9 @@ local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
 local uri_query = require "dromozoa.http.uri_query"
 
-local class = {}
+local class = {
+  query = uri_query;
+}
 
 function class.new(scheme, authority, path)
   return {
@@ -32,15 +34,14 @@ function class.new(scheme, authority, path)
 end
 
 function class:param(...)
-  local params = self.params
-  params:param(...)
+  self.params:param(...)
   return self
 end
 
 function class:build()
+  local params = self.params
   local out = sequence_writer()
   out:write(self.scheme, "://", self.authority, self.path)
-  local params = self.params
   if not empty(params) then
     out:write("?", tostring(params))
   end
