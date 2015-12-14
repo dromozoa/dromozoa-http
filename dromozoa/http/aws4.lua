@@ -28,10 +28,10 @@ end
 local class = {}
 
 function class.new(region, service)
-  return class.reset({
+  return {
     region = region;
     service = service;
-  })
+  }
 end
 
 function class:reset(datetime)
@@ -165,15 +165,12 @@ end
 
 function class:sign_header(request, access_key_id, secret_access_key)
   return self
-      :build(request)
-      :make_canonical_request(request)
-      :make_string_to_sign(request)
-      :make_signature(request, secret_access_key)
-      :make_header(request, access_key_id)
-end
-
-function class:sign_query(request, access_key_id, secret_access_key)
-  return self
+    :reset()
+    :build(request)
+    :make_canonical_request(request)
+    :make_string_to_sign(request)
+    :make_signature(request, secret_access_key)
+    :make_header(request, access_key_id)
 end
 
 local metatable = {
