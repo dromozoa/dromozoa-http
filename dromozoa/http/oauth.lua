@@ -71,17 +71,17 @@ function class:make_parameter_string(request)
       oauth_token = self.oauth_token;
       oauth_version = "1.0";
     })
-    :param(request.uri.query)
+    :param(request.uri.params)
     :param(request.params)
     :sort()
-  this.parameter_string = oauth_params:build()
+  this.parameter_string = tostring(oauth_params)
   return self
 end
 
 function class:make_signature_base_string(request)
   local this = request.oauth
   local url = clone(request.uri)
-  url.query = uri_query()
+  url.params = uri_query()
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")

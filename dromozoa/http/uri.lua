@@ -27,22 +27,22 @@ function class.new(scheme, authority, path)
     scheme = scheme;
     authority = authority;
     path = path;
-    query = uri_query();
+    params = uri_query();
   }
 end
 
 function class:param(...)
-  local query = self.query
-  query:param(...)
+  local params = self.params
+  params:param(...)
   return self
 end
 
 function class:build()
   local out = sequence_writer()
   out:write(self.scheme, "://", self.authority, self.path)
-  local query = self.query
-  if not empty(query) then
-    out:write("?", tostring(query))
+  local params = self.params
+  if not empty(params) then
+    out:write("?", tostring(params))
   end
   return out:concat()
 end

@@ -25,7 +25,7 @@ query:param("bar", 37)
 query:param("baz", "日本語")
 assert(tostring(query) == "foo=17&bar=23&bar=37&baz=%E6%97%A5%E6%9C%AC%E8%AA%9E")
 assert(tostring(uri_query():param("foo", "'()")) == "foo=%27%28%29")
-assert("?" .. uri_query():param("foo", "bar"):build() == "?foo=bar")
+assert("?" .. tostring(uri_query():param("foo", "bar")) == "?foo=bar")
 
 local uri = http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi")
 assert(tostring(uri) == "http://localhost/cgi-bin/dromozoa-http-test.cgi")

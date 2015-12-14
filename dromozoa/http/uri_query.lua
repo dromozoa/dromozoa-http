@@ -15,7 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local empty = require "dromozoa.commons.empty"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
 local parameters = require "dromozoa.http.parameters"
@@ -35,7 +34,12 @@ function class:sort()
   return self
 end
 
-function class:build()
+local metatable = {
+  __index = class;
+  __pairs = parameters.each;
+}
+
+function metatable:__tostring()
   local out = sequence_writer()
   for name, value, i in self:each() do
     if i > 1 then
@@ -45,12 +49,6 @@ function class:build()
   end
   return out:concat()
 end
-
-local metatable = {
-  __index = class;
-  __tostring = class.build;
-  __pairs = parameters.each;
-}
 
 return setmetatable(class, {
   __index = parameters;
