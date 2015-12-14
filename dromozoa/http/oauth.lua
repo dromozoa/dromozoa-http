@@ -53,6 +53,18 @@ function class:reset(timestamp, nonce)
   return self
 end
 
+function class:make_params(params)
+  return params:param({
+    oauth_callback = self.callback;
+    oauth_consumer_key = self.consumer_key;
+    oauth_nonce = self.nonce;
+    oauth_signature_method = "HMAC-SHA1";
+    oauth_timestamp = self.timestamp;
+    oauth_token = self.token;
+    oauth_version = "1.0";
+  })
+end
+
 function class:build(request)
   request:build()
   if request.oauth == nil then
@@ -63,16 +75,7 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-  local params = uri.query()
-    :param({
-      oauth_callback = self.callback;
-      oauth_consumer_key = self.consumer_key;
-      oauth_nonce = self.nonce;
-      oauth_signature_method = signature_method;
-      oauth_timestamp = self.timestamp;
-      oauth_token = self.token;
-      oauth_version = version;
-    })
+  local params = self:make_params(uri.query())
     :param(request.uri.params)
     :param(request.params)
     :sort()
@@ -82,12 +85,10 @@ end
 
 function class:make_signature_base_string(request)
   local this = request.oauth
-  local url = clone(request.uri)
-  url.params = url.query()
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")
-    :write(uri.encode(url))
+    :write(uri.encode(request.uri:without_query()))
     :write("&")
     :write(uri.encode(this.parameter_string))
     :concat()
@@ -106,29 +107,18 @@ end
 
 function class:make_header(request)
   local this = request.oauth
-  local oauth_params = parameters()
-    :param({
-      oauth_callback = self.callback;
-      oauth_consumer_key = self.consumer_key;
-      oauth_nonce = self.nonce;
-      oauth_signature = this.signature;
-      oauth_signature_method = signature_method;
-      oauth_timestamp = self.timestamp;
-      oauth_token = self.token;
-      oauth_version = version;
-    })
+  local params = self:make_params(parameters())
+    :param("oauth_signature", this.signature)
     :sort(function (a, b)
       return uri.encode(a[1]) < uri.encode(b[1])
     end)
-
   local out = sequence_writer():write("OAuth ")
-  for name, value, i in oauth_params:each() do
+  for name, value, i in params:each() do
     if i > 1 then
       out:write(", ")
     end
     out:write(uri.encode(name), "=\"", uri.encode(value), "\"")
   end
-
   local authorization = out:concat()
   this.authorization = authorization
   request:header("Authorization", authorization)

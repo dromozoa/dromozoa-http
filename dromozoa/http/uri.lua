@@ -38,6 +38,10 @@ function class:param(...)
   return self
 end
 
+function class:without_query()
+  return class(self.scheme, self.authority, self.path)
+end
+
 function class:build()
   local params = self.params
   local out = sequence_writer()
