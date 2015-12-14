@@ -1,8 +1,8 @@
 package = "dromozoa-http"
-version = "1.5-1"
+version = "1.6-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.5.tar.gz";
-  file = "dromozoa-http-1.5.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.6.tar.gz";
+  file = "dromozoa-http-1.6.tar.gz";
 }
 description = {
   summary = "Portable HTTP client";
@@ -18,6 +18,7 @@ build = {
   modules = {
     ["dromozoa.http"] = "dromozoa/http.lua";
     ["dromozoa.http.aws4"] = "dromozoa/http/aws4.lua";
+    ["dromozoa.http.oauth"] = "dromozoa/http/oauth.lua";
     ["dromozoa.http.request"] = "dromozoa/http/request.lua";
     ["dromozoa.http.response"] = "dromozoa/http/response.lua";
     ["dromozoa.http.uri"] = "dromozoa/http/uri.lua";
