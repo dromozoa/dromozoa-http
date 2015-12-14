@@ -88,7 +88,7 @@ function class:request(request)
   local headers = request.headers
   local content_type = request.content_type
   local content = request.content
-  local params = request.params
+  local form = request.form
 
   local commands = sequence():push("curl")
   local tmpnames = sequence()
@@ -148,7 +148,7 @@ function class:request(request)
 
   if content_type ~= nil then
     if content_type == "multipart/form-data" then
-      for name, value in params:each() do
+      for name, value in form:each() do
         if type(value) == "table" then
           local tmpname = os.tmpname()
           tmpnames:push(tmpname)

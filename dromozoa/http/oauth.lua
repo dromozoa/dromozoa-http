@@ -72,7 +72,7 @@ function class:make_parameter_string(request)
       oauth_version = "1.0";
     })
     :param(request.uri.query)
-    :param(request.params)
+    :param(request.form)
 
   this.oauth_params = oauth_params:sort()
   this.parameter_string = oauth_params:build()
