@@ -22,6 +22,7 @@ local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
 local uri = require "dromozoa.commons.uri"
+local uri_query = require "dromozoa.http.uri_query"
 
 local class = {}
 
@@ -59,57 +60,40 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-  local oauth_params = sequence()
-  if self.oauth_callback ~= nil then
-    oauth_params:push({ "oauth_callback", self.oauth_callback })
-  end
-  oauth_params
-    :push({ "oauth_consumer_key", self.oauth_consumer_key })
-    :push({ "oauth_nonce", self.oauth_nonce })
-    :push({ "oauth_signature_method", "HMAC-SHA1" })
-    :push({ "oauth_timestamp", self.oauth_timestamp })
-  if self.oauth_token ~= nil then
-    oauth_params:push({ "oauth_token", self.oauth_token })
-  end
-  oauth_params:push({ "oauth_version", "1.0" })
 
-  if request.uri.query ~= nil then
-    for param in request.uri.query.params:each() do
-      oauth_params:push({ param[1], param[2] })
-    end
-  end
-  if request.params ~= nil then
-    for param in request.params:each() do
-      oauth_params:push({ param[1], param[2] })
-    end
-  end
-  for param in oauth_params:each() do
-    param[1] = uri.encode(param[1])
-    param[2] = uri.encode(param[2])
-  end
-  oauth_params:sort(function (a, b) return a[1] < b[1] end)
-  this.oauth_params = oauth_params
+  local oauth_params = uri_query():param({
+    oauth_callback = self.oauth_callback;
+    oauth_consumer_key = self.oauth_consumer_key;
+    oauth_nonce = self.oauth_nonce;
+    oauth_signature_method = "HMAC-SHA1";
+    oauth_timestamp = self.oauth_timestamp;
+    oauth_token = self.oauth_token;
+    oauth_version = "1.0";
+  })
 
-  local out = sequence_writer()
-  local first = true
-  for param in oauth_params:each() do
-    if first then
-      first = false
-    else
-      out:write("&")
+  local query = request.uri.query
+  if query ~= nil then
+    for param in query.params:each() do
+      oauth_params:param(param[1], param[2])
     end
-    out:write(param[1], "=", param[2])
   end
-  this.parameter_string = out:concat()
+
+  local params = request.params
+  if params ~= nil then
+    for param in params:each() do
+      oauth_params:param(param[1], param[2])
+    end
+  end
+
+  this.oauth_params = oauth_params:sort()
+  this.parameter_string = oauth_params:build()
   return self
 end
 
 function class:make_signature_base_string(request)
   local this = request.oauth
-
   local url = clone(request.uri)
   url.query = nil
-
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")
@@ -133,6 +117,7 @@ end
 function class:make_header(request)
   local this = request.oauth
   local oauth_params = sequence()
+
   if self.oauth_callback ~= nil then
     oauth_params:push({ "oauth_callback", self.oauth_callback })
   end

@@ -60,8 +60,9 @@ function class:build(request)
     content_sha256 = sha256.hex(content)
   end
   this.content_sha256 = content_sha256
-  request:header("x-amz-content-sha256", content_sha256)
-  request:header("x-amz-date", self.datetime)
+  request
+    :header("x-amz-content-sha256", content_sha256)
+    :header("x-amz-date", self.datetime)
   return self
 end
 
@@ -75,12 +76,7 @@ function class:make_canonical_request(request)
   if query == nil then
     out:write("\n")
   else
-    local params = sequence();
-    for param in query.params:each() do
-      params:push(uri.encode(param[1]) .. "=" .. uri.encode(param[2]))
-    end
-    params:sort()
-    out:write(params:concat("&"), "\n")
+    out:write(clone(query):sort():build(), "\n")
   end
 
   local canonical_header_map = {}

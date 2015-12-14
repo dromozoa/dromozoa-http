@@ -19,6 +19,14 @@ local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
 
+local function encode(param)
+  return uri.encode(param[1]) .. "=" .. uri.encode(param[2])
+end
+
+local function compare(a, b)
+  return encode(a) < encode(b)
+end
+
 local class = {}
 
 function class.new()
@@ -41,6 +49,12 @@ function class:param(that, value)
   return self
 end
 
+function class:sort()
+  local params = self.params
+  params:sort(compare)
+  return self
+end
+
 function class:build()
   local params = self.params
   if params == nil then
@@ -49,13 +63,12 @@ function class:build()
     local out = sequence_writer()
     local first = true
     for param in params:each() do
-      local name, value = param[1], param[2]
       if first then
         first = false
       else
         out:write("&")
       end
-      out:write(uri.encode(name), "=", uri.encode(value))
+      out:write(encode(param))
     end
     return out:concat()
   end
