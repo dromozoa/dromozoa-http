@@ -71,7 +71,6 @@ function class:make_canonical_request(request)
   local out = sequence_writer()
   out:write(request.method, "\n")
   out:write(request.uri.path, "\n")
-
   out:write(clone(request.uri.query):sort():build(), "\n")
 
   local canonical_header_map = {}

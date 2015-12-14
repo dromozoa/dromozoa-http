@@ -22,6 +22,7 @@ local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
 local uri = require "dromozoa.commons.uri"
+local parameters = require "dromozoa.http.parameters"
 local uri_query = require "dromozoa.http.uri_query"
 
 local class = {}
@@ -60,7 +61,6 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-
   local oauth_params = uri_query()
     :param({
       oauth_callback = self.oauth_callback;
@@ -73,8 +73,7 @@ function class:make_parameter_string(request)
     })
     :param(request.uri.query)
     :param(request.params)
-
-  this.oauth_params = oauth_params:sort()
+    :sort()
   this.parameter_string = oauth_params:build()
   return self
 end
@@ -105,31 +104,27 @@ end
 
 function class:make_header(request)
   local this = request.oauth
-  local oauth_params = sequence()
-
-  if self.oauth_callback ~= nil then
-    oauth_params:push({ "oauth_callback", self.oauth_callback })
-  end
-  oauth_params
-    :push({ "oauth_consumer_key", uri.encode(self.oauth_consumer_key) })
-    :push({ "oauth_nonce", uri.encode(self.oauth_nonce) })
-    :push({ "oauth_signature", uri.encode(this.signature) })
-    :push({ "oauth_signature_method", "HMAC-SHA1" })
-    :push({ "oauth_timestamp", uri.encode(self.oauth_timestamp) })
-  if self.oauth_token ~= nil then
-    oauth_params:push({ "oauth_token", self.oauth_token })
-  end
-  oauth_params:push({ "oauth_version", "1.0" })
+  local oauth_params = parameters()
+    :param({
+      oauth_callback = self.oauth_callback;
+      oauth_consumer_key = self.oauth_consumer_key;
+      oauth_nonce = self.oauth_nonce;
+      oauth_signature = this.signature;
+      oauth_signature_method = "HMAC-SHA1";
+      oauth_timestamp = self.oauth_timestamp;
+      oauth_token = self.oauth_token;
+      oauth_version = "1.0";
+    })
+    :sort(function (a, b)
+      return uri.encode(a[1]) < uri.encode(b[1])
+    end)
 
   local out = sequence_writer():write("OAuth ")
-  local first = true
-  for param in oauth_params:each() do
-    if first then
-      first = false
-    else
+  for name, value, i in oauth_params:each() do
+    if i > 1 then
       out:write(", ")
     end
-    out:write(param[1], "=\"", param[2], "\"")
+    out:write(uri.encode(name), "=\"", uri.encode(value), "\"")
   end
 
   local authorization = out:concat()
