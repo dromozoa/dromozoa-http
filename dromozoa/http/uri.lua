@@ -21,22 +21,21 @@ local uri_query = require "dromozoa.http.uri_query"
 
 local class = {}
 
-function class.new(scheme, authority, path, query)
+function class.new(scheme, authority, path)
   return {
     scheme = scheme;
     authority = authority;
     path = path;
-    query = query;
   }
 end
 
-function class:param(name, value)
+function class:param(that, value)
   local query = self.query
   if query == nil then
     query = uri_query()
     self.query = query
   end
-  query:param(name, value)
+  query:param(that, value)
   return self
 end
 

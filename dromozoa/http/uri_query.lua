@@ -19,23 +19,25 @@ local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
 
-local encode = uri.encode
-
-local class = {
-  encode = encode;
-}
+local class = {}
 
 function class.new()
   return {}
 end
 
-function class:param(name, value)
+function class:param(that, value)
   local params = self.params
   if params == nil then
     params = sequence()
     self.params = params
   end
-  params:push({ name, value })
+  if type(that) == "table" then
+    for name, value in pairs(that) do
+      params:push({ name, value })
+    end
+  else
+    params:push({ that, value })
+  end
   return self
 end
 
@@ -53,7 +55,7 @@ function class:build()
       else
         out:write("&")
       end
-      out:write(encode(name), "=", encode(value))
+      out:write(uri.encode(name), "=", uri.encode(value))
     end
     return out:concat()
   end

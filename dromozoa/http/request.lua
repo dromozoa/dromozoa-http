@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
@@ -46,23 +47,30 @@ function class:save(filename)
   return self:option("save", filename)
 end
 
-function class:encode(encode)
-  return self:option("encode", encode)
-end
-
-function class:header(name, value)
-  assert(name ~= "Content-Type")
-  self.headers:push({ name, value })
+function class:header(that, value)
+  if type(that) == "table" then
+    for name, value in pairs(that) do
+      self.headers:push({ name, value })
+    end
+  else
+    self.headers:push({ that, value })
+  end
   return self
 end
 
-function class:param(name, value)
+function class:param(that, value)
   local params = self.params
   if params == nil then
     params = sequence()
     self.params = params
   end
-  params:push({ name, value })
+  if type(that) == "table" then
+    for name, value in pairs(that) do
+      params:push({ name, value })
+    end
+  else
+    params:push({ that, value })
+  end
   return self
 end
 
@@ -73,10 +81,6 @@ function class:build()
     if params == nil then
       content = ""
     else
-      local encode = self.options.encode
-      if encode == nil then
-        encode = uri.encode_html5
-      end
       local out = sequence_writer()
       local first = true
       for param in params:each() do
@@ -86,7 +90,7 @@ function class:build()
         else
           out:write("&")
         end
-        out:write(encode(name), "=", encode(value))
+        out:write(uri.encode_html5(name), "=", uri.encode_html5(value))
       end
       content = out:concat()
     end

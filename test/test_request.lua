@@ -34,9 +34,11 @@ local request = http.request("POST", "http://localhost/")
 assert(request:build() == "foo=+&bar=%26%3D&baz=09AZaz&qux=%E6%97%A5%E6%9C%AC%E8%AA%9E")
 
 local request = http.request("POST", "http://localhost/")
-  :encode(http.uri.encode_rfc3986)
-  :param("foo", " ")
-  :param("bar", "&=")
-  :param("baz", "09AZaz")
-  :param("qux", "日本語")
-assert(request:build() == "foo=%20&bar=%26%3D&baz=09AZaz&qux=%E6%97%A5%E6%9C%AC%E8%AA%9E")
+  :param({
+    foo = " ";
+    bar = "&=";
+    baz = "09AZaz";
+    qux = "日本語";
+  })
+request.params:sort(function (a, b) return a[1] < b[1] end)
+assert(request:build() == "bar=%26%3D&baz=09AZaz&foo=+&qux=%E6%97%A5%E6%9C%AC%E8%AA%9E")
