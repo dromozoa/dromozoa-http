@@ -16,16 +16,11 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local base64 = require "dromozoa.commons.base64"
-local clone = require "dromozoa.commons.clone"
 local random_bytes = require "dromozoa.commons.random_bytes"
-local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
 local parameters = require "dromozoa.http.parameters"
 local uri = require "dromozoa.http.uri"
-
-local signature_method = "HMAC-SHA1"
-local version = "1.0"
 
 local class = {}
 
