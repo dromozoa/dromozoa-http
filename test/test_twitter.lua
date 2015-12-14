@@ -16,10 +16,12 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local base64 = require "dromozoa.commons.base64"
+local json = require "dromozoa.commons.json"
 local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
 local http = require "dromozoa.http"
+local oauth = require "dromozoa.http.oauth"
 
 local ua = http.user_agent():fail():verbose()
 
@@ -87,3 +89,7 @@ kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2Y
 local oauth_signature = base64.encode(sha1.hmac(signing_key, signature_base_string, "bin"))
 assert(oauth_signature == [[
 tnnArxj06cWHq44gCs1OSKk/jLY=]])
+
+local a = oauth():reset()
+-- print(json.encode(a))
+print(a.oauth_nonce)
