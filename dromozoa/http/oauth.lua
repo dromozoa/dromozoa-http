@@ -61,11 +61,15 @@ function class:make_parameter_string(request)
     :push({ "oauth_timestamp", self.oauth_timestamp })
     :push({ "oauth_token", self.oauth_token })
     :push({ "oauth_version", "1.0" })
-  for param in request.uri.query.params:each() do
-    oauth_params:push({ param[1], param[2] })
+  if request.uri.query ~= nil then
+    for param in request.uri.query.params:each() do
+      oauth_params:push({ param[1], param[2] })
+    end
   end
-  for param in request.params:each() do
-    oauth_params:push({ param[1], param[2] })
+  if request.params ~= nil then
+    for param in request.params:each() do
+      oauth_params:push({ param[1], param[2] })
+    end
   end
   for param in oauth_params:each() do
     param[1] = uri.encode(param[1])
