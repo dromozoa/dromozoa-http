@@ -18,10 +18,10 @@ build = {
   modules = {
     ["dromozoa.http"] = "dromozoa/http.lua";
     ["dromozoa.http.aws4"] = "dromozoa/http/aws4.lua";
-    ["dromozoa.http.query"] = "dromozoa/http/query.lua";
     ["dromozoa.http.request"] = "dromozoa/http/request.lua";
     ["dromozoa.http.response"] = "dromozoa/http/response.lua";
     ["dromozoa.http.uri"] = "dromozoa/http/uri.lua";
+    ["dromozoa.http.uri_query"] = "dromozoa/http/uri_query.lua";
     ["dromozoa.http.user_agent"] = "dromozoa/http/user_agent.lua";
   };
 }
