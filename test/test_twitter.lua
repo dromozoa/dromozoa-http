@@ -54,7 +54,7 @@ assert(result.source:find("Twitter for iPhone"))
 
 -- local uri = http.uri(scheme, host, "/1.1/statuses/update.json")
 -- local request = http.request("POST", uri)
---   :param("status", "テストだよ！")
+--   :param("status", "@vaporoid ファイトだよ！")
 -- oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
 -- print(request.oauth.signature_base_string)
 -- local response = assert(ua:request(request))

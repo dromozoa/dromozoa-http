@@ -69,23 +69,27 @@ end
 function class:build()
   local content = self.content
   local params = self.params
-  if self.content_type ~= "multipart/form-data" and content == nil and params ~= nil then
-    local encode = self.options.encode
-    if encode == nil then
-      encode = uri.encode_html5
-    end
-    local out = sequence_writer()
-    local first = true
-    for param in params:each() do
-      local name, value = param[1], param[2]
-      if first then
-        first = false
-      else
-        out:write("&")
+  if self.content_type ~= "multipart/form-data" and content == nil then
+    if params == nil then
+      content = ""
+    else
+      local encode = self.options.encode
+      if encode == nil then
+        encode = uri.encode_html5
       end
-      out:write(encode(name), "=", encode(value))
+      local out = sequence_writer()
+      local first = true
+      for param in params:each() do
+        local name, value = param[1], param[2]
+        if first then
+          first = false
+        else
+          out:write("&")
+        end
+        out:write(encode(name), "=", encode(value))
+      end
+      content = out:concat()
     end
-    content = out:concat()
     self.content = content
   end
   return content

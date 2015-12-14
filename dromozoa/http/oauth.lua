@@ -55,12 +55,19 @@ end
 function class:make_parameter_string(request)
   local this = request.oauth
   local oauth_params = sequence()
+  if self.oauth_callback ~= nil then
+    oauth_params:push({ "oauth_callback", self.oauth_callback })
+  end
+  oauth_params
     :push({ "oauth_consumer_key", self.oauth_consumer_key })
     :push({ "oauth_nonce", self.oauth_nonce })
     :push({ "oauth_signature_method", "HMAC-SHA1" })
     :push({ "oauth_timestamp", self.oauth_timestamp })
-    :push({ "oauth_token", self.oauth_token })
-    :push({ "oauth_version", "1.0" })
+  if self.oauth_token ~= nil then
+    oauth_params:push({ "oauth_token", self.oauth_token })
+  end
+  oauth_params:push({ "oauth_version", "1.0" })
+
   if request.uri.query ~= nil then
     for param in request.uri.query.params:each() do
       oauth_params:push({ param[1], param[2] })
@@ -109,6 +116,9 @@ function class:make_signature_base_string(request)
 end
 
 function class:make_signature(request, oauth_consumer_secret, oauth_token_secret)
+  if oauth_token_secret == nil then
+    oauth_token_secret = ""
+  end
   local this = request.oauth
   local signing_key = uri.encode(oauth_consumer_secret) .. "&" .. uri.encode(oauth_token_secret)
   this.signature = base64.encode(sha1.hmac(signing_key, this.signature_base_string, "bin"))
@@ -118,13 +128,19 @@ end
 function class:make_header(request)
   local this = request.oauth
   local oauth_params = sequence()
+  if self.oauth_callback ~= nil then
+    oauth_params:push({ "oauth_callback", self.oauth_callback })
+  end
+  oauth_params
     :push({ "oauth_consumer_key", uri.encode(self.oauth_consumer_key) })
     :push({ "oauth_nonce", uri.encode(self.oauth_nonce) })
     :push({ "oauth_signature", uri.encode(this.signature) })
     :push({ "oauth_signature_method", "HMAC-SHA1" })
     :push({ "oauth_timestamp", uri.encode(self.oauth_timestamp) })
-    :push({ "oauth_token", uri.encode(self.oauth_token) })
-    :push({ "oauth_version", "1.0" })
+  if self.oauth_token ~= nil then
+    oauth_params:push({ "oauth_token", self.oauth_token })
+  end
+  oauth_params:push({ "oauth_version", "1.0" })
 
   local out = sequence_writer():write("OAuth ")
   local first = true
