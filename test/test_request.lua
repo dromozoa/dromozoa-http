@@ -40,5 +40,5 @@ local request = http.request("POST", "http://localhost/")
     baz = "09AZaz";
     qux = "日本語";
   })
-request.form:sort(function (a, b) return a[1] < b[1] end)
+request.params:sort(function (a, b) return a[1] < b[1] end)
 assert(request:build() == "bar=%26%3D&baz=09AZaz&foo=+&qux=%E6%97%A5%E6%9C%AC%E8%AA%9E")

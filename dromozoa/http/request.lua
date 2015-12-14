@@ -37,7 +37,7 @@ function class.new(method, uri, content_type, content)
     headers = parameters();
     content_type = content_type;
     content = content;
-    form = parameters();
+    params = parameters();
   }
 end
 
@@ -57,20 +57,20 @@ function class:header(...)
 end
 
 function class:param(...)
-  local form = self.form
-  form:param(...)
+  local params = self.params
+  params:param(...)
   return self
 end
 
 function class:build()
   local content = self.content
-  local form = self.form
+  local params = self.params
   if self.content_type ~= "multipart/form-data" and content == nil then
-    if empty(form) then
+    if empty(params) then
       content = ""
     else
       local out = sequence_writer()
-      for name, value, i in form:each() do
+      for name, value, i in params:each() do
         if i > 1 then
           out:write("&")
         end
