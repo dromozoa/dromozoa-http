@@ -15,10 +15,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
 local parameters = require "dromozoa.http.parameters"
+
+local function encode(name, value)
+  return uri.encode_html5(name) .. "=" .. uri.encode_html5(value)
+end
 
 local class = {}
 
@@ -67,7 +70,7 @@ function class:build()
       if i > 1 then
         out:write("&")
       end
-      out:write(uri.encode_html5(name), "=", uri.encode_html5(value))
+      out:write(encode(name, value))
     end
     content = out:concat()
     self.content = content
