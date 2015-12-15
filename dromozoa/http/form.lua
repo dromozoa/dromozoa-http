@@ -16,7 +16,6 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local sequence_writer = require "dromozoa.commons.sequence_writer"
-local split = require "dromozoa.commons.split"
 local uri = require "dromozoa.commons.uri"
 local parameters = require "dromozoa.http.parameters"
 
@@ -39,7 +38,7 @@ end
 
 function class.decode(s)
   local result = parameters()
-  for param in split(s, "%&"):each() do
+  for param in s:gmatch("[^%&]+") do
     local name, value = param:match("^([^%=]*)%=(.*)")
     if name == nil then
       result:param(uri.decode(param), "")
