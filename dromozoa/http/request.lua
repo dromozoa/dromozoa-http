@@ -15,13 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence_writer = require "dromozoa.commons.sequence_writer"
-local uri = require "dromozoa.commons.uri"
+local form = require "dromozoa.http.form"
 local parameters = require "dromozoa.http.parameters"
-
-local function encode(name, value)
-  return uri.encode_html5(name) .. "=" .. uri.encode_html5(value)
-end
 
 local class = {}
 
@@ -63,16 +58,8 @@ end
 
 function class:build()
   local content = self.content
-  local params = self.params
   if self.content_type ~= "multipart/form-data" and content == nil then
-    local out = sequence_writer()
-    for name, value, i in params:each() do
-      if i > 1 then
-        out:write("&")
-      end
-      out:write(encode(name, value))
-    end
-    content = out:concat()
+    content = form.encode(self.params)
     self.content = content
   end
   return content

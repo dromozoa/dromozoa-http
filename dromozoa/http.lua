@@ -16,6 +16,7 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local aws4 = require "dromozoa.http.aws4"
+local form = require "dromozoa.http.form"
 local oauth = require "dromozoa.http.oauth"
 local request = require "dromozoa.http.request"
 local uri = require "dromozoa.http.uri"
@@ -25,6 +26,7 @@ local class = {
   user_agent = user_agent;
   request = request;
   uri = uri;
+  form = form;
   aws4 = aws4;
   oauth = oauth;
 }

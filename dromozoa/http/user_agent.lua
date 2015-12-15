@@ -207,7 +207,7 @@ function class:request(request)
   if result == nil then
     return nil, what, code
   else
-    local code, content_type  = result:match("^(%d+),(.*)")
+    local code, content_type  = assert(result:match("^(%d+),(.*)"))
     return response(tonumber(code), content_type, content)
   end
 end
