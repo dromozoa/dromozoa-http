@@ -18,7 +18,6 @@
 local base64 = require "dromozoa.commons.base64"
 local json = require "dromozoa.commons.json"
 local http = require "dromozoa.http"
-local oauth = require "dromozoa.http.oauth"
 
 local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
 local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
@@ -44,7 +43,7 @@ local uri = http.uri(scheme, host, "/1.1/statuses/show.json")
   :param("id", status_id)
   :param("trim_user", "true")
 local request = http.request("GET", uri)
-oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
+http.oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
 local response = assert(ua:request(request))
 local result = json.decode(response.content)
 
@@ -55,6 +54,6 @@ assert(result.source:find("Twitter for iPhone"))
 -- local uri = http.uri(scheme, host, "/1.1/statuses/update.json")
 -- local request = http.request("POST", uri)
 --   :param("status", "@vaporoid ファイトだよ！")
--- oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
+-- http.oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
 -- print(request.oauth.signature_base_string)
 -- local response = assert(ua:request(request))

@@ -141,15 +141,13 @@ function class:request(request)
   end
   commands:push(shell.quote(uri))
 
-  for header in headers:each() do
-    local name, value = header[1], header[2]
+  for name, value in headers:each() do
     commands:push("--header", shell.quote(name .. ": " .. value))
   end
 
   if content_type ~= nil then
     if content_type == "multipart/form-data" then
-      for param in params:each() do
-        local name, value = param[1], param[2]
+      for name, value in params:each() do
         if type(value) == "table" then
           local tmpname = os.tmpname()
           tmpnames:push(tmpname)
@@ -209,7 +207,7 @@ function class:request(request)
   if result == nil then
     return nil, what, code
   else
-    local code, content_type  = result:match("^(%d+),(.*)")
+    local code, content_type  = assert(result:match("^(%d+),(.*)"))
     return response(tonumber(code), content_type, content)
   end
 end

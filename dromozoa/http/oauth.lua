@@ -16,19 +16,30 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local base64 = require "dromozoa.commons.base64"
-local clone = require "dromozoa.commons.clone"
 local random_bytes = require "dromozoa.commons.random_bytes"
-local sequence = require "dromozoa.commons.sequence"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local sha1 = require "dromozoa.commons.sha1"
-local uri = require "dromozoa.commons.uri"
+local parameters = require "dromozoa.http.parameters"
+local uri = require "dromozoa.http.uri"
+
+local function make_params(self, params)
+  return params:param({
+    oauth_callback = self.callback;
+    oauth_consumer_key = self.consumer_key;
+    oauth_nonce = self.nonce;
+    oauth_signature_method = "HMAC-SHA1";
+    oauth_timestamp = self.timestamp;
+    oauth_token = self.token;
+    oauth_version = "1.0";
+  })
+end
 
 local class = {}
 
-function class.new(oauth_consumer_key, oauth_token)
+function class.new(consumer_key, token)
   return {
-    oauth_consumer_key = oauth_consumer_key;
-    oauth_token = oauth_token;
+    consumer_key = consumer_key;
+    token = token;
   }
 end
 
@@ -37,15 +48,15 @@ function class:param(name, value)
   return self
 end
 
-function class:reset(oauth_timestamp, oauth_nonce)
-  if oauth_timestamp == nil then
-    oauth_timestamp = os.time()
+function class:reset(timestamp, nonce)
+  if timestamp == nil then
+    timestamp = os.time()
   end
-  if oauth_nonce == nil then
-    oauth_nonce = base64.encode_url(random_bytes(32))
+  if nonce == nil then
+    nonce = base64.encode_url(random_bytes(32))
   end
-  self.oauth_timestamp = oauth_timestamp
-  self.oauth_nonce = oauth_nonce
+  self.timestamp = timestamp
+  self.nonce = nonce
   return self
 end
 
@@ -59,118 +70,63 @@ end
 
 function class:make_parameter_string(request)
   local this = request.oauth
-  local oauth_params = sequence()
-  if self.oauth_callback ~= nil then
-    oauth_params:push({ "oauth_callback", self.oauth_callback })
-  end
-  oauth_params
-    :push({ "oauth_consumer_key", self.oauth_consumer_key })
-    :push({ "oauth_nonce", self.oauth_nonce })
-    :push({ "oauth_signature_method", "HMAC-SHA1" })
-    :push({ "oauth_timestamp", self.oauth_timestamp })
-  if self.oauth_token ~= nil then
-    oauth_params:push({ "oauth_token", self.oauth_token })
-  end
-  oauth_params:push({ "oauth_version", "1.0" })
-
-  if request.uri.query ~= nil then
-    for param in request.uri.query.params:each() do
-      oauth_params:push({ param[1], param[2] })
-    end
-  end
-  if request.params ~= nil then
-    for param in request.params:each() do
-      oauth_params:push({ param[1], param[2] })
-    end
-  end
-  for param in oauth_params:each() do
-    param[1] = uri.encode(param[1])
-    param[2] = uri.encode(param[2])
-  end
-  oauth_params:sort(function (a, b) return a[1] < b[1] end)
-  this.oauth_params = oauth_params
-
-  local out = sequence_writer()
-  local first = true
-  for param in oauth_params:each() do
-    if first then
-      first = false
-    else
-      out:write("&")
-    end
-    out:write(param[1], "=", param[2])
-  end
-  this.parameter_string = out:concat()
+  local params = make_params(self, uri.query())
+    :param(request.uri.params)
+    :param(request.params)
+    :sort()
+  this.parameter_string = tostring(params)
   return self
 end
 
 function class:make_signature_base_string(request)
   local this = request.oauth
-
-  local url = clone(request.uri)
-  url.query = nil
-
   this.signature_base_string = sequence_writer()
     :write(request.method:upper())
     :write("&")
-    :write(uri.encode(url))
+    :write(uri.encode(request.uri:without_query()))
     :write("&")
     :write(uri.encode(this.parameter_string))
     :concat()
   return self
 end
 
-function class:make_signature(request, oauth_consumer_secret, oauth_token_secret)
-  if oauth_token_secret == nil then
-    oauth_token_secret = ""
+function class:make_signature(request, consumer_secret, token_secret)
+  if token_secret == nil then
+    token_secret = ""
   end
   local this = request.oauth
-  local signing_key = uri.encode(oauth_consumer_secret) .. "&" .. uri.encode(oauth_token_secret)
+  local signing_key = uri.encode(consumer_secret) .. "&" .. uri.encode(token_secret)
   this.signature = base64.encode(sha1.hmac(signing_key, this.signature_base_string, "bin"))
   return self
 end
 
 function class:make_header(request)
   local this = request.oauth
-  local oauth_params = sequence()
-  if self.oauth_callback ~= nil then
-    oauth_params:push({ "oauth_callback", self.oauth_callback })
-  end
-  oauth_params
-    :push({ "oauth_consumer_key", uri.encode(self.oauth_consumer_key) })
-    :push({ "oauth_nonce", uri.encode(self.oauth_nonce) })
-    :push({ "oauth_signature", uri.encode(this.signature) })
-    :push({ "oauth_signature_method", "HMAC-SHA1" })
-    :push({ "oauth_timestamp", uri.encode(self.oauth_timestamp) })
-  if self.oauth_token ~= nil then
-    oauth_params:push({ "oauth_token", self.oauth_token })
-  end
-  oauth_params:push({ "oauth_version", "1.0" })
-
+  local params = make_params(self, parameters())
+    :param("oauth_signature", this.signature)
+    :sort(function (a, b)
+      return uri.encode(a[1]) < uri.encode(b[1])
+    end)
   local out = sequence_writer():write("OAuth ")
-  local first = true
-  for param in oauth_params:each() do
-    if first then
-      first = false
-    else
+  for name, value, i in params:each() do
+    if i > 1 then
       out:write(", ")
     end
-    out:write(param[1], "=\"", param[2], "\"")
+    out:write(uri.encode(name), "=\"", uri.encode(value), "\"")
   end
-
   local authorization = out:concat()
   this.authorization = authorization
   request:header("Authorization", authorization)
   return self
 end
 
-function class:sign_header(request, oauth_consumer_secret, oauth_token_secret)
+function class:sign_header(request, consumer_secret, token_secret)
   return self
     :reset()
     :build(request)
     :make_parameter_string(request)
     :make_signature_base_string(request)
-    :make_signature(request, oauth_consumer_secret, oauth_token_secret)
+    :make_signature(request, consumer_secret, token_secret)
     :make_header(request)
 end
 
@@ -179,7 +135,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, oauth_consumer_key, oauth_token)
-    return setmetatable(class.new(oauth_consumer_key, oauth_token), metatable)
+  __call = function (_, consumer_key, token)
+    return setmetatable(class.new(consumer_key, token), metatable)
   end;
 })

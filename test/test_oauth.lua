@@ -16,7 +16,6 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local http = require "dromozoa.http"
-local oauth = require "dromozoa.http.oauth"
 
 local ua = http.user_agent():fail():verbose()
 
@@ -28,13 +27,13 @@ local uri = http.uri(scheme, host, "/1/statuses/update.json")
 local request = http.request("POST", uri)
   :param("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 
-local a = oauth("xvz1evFS4wEEPTGEFPHBog", "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb")
-    :reset(1318622958, "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg")
-    :build(request)
-    :make_parameter_string(request)
-    :make_signature_base_string(request)
-    :make_signature(request, "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw", "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")
-    :make_header(request)
+local oauth = http.oauth("xvz1evFS4wEEPTGEFPHBog", "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb")
+  :reset(1318622958, "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg")
+  :build(request)
+  :make_parameter_string(request)
+  :make_signature_base_string(request)
+  :make_signature(request, "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw", "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")
+  :make_header(request)
 assert(request.oauth.parameter_string == [[
 include_entities=true&oauth_consumer_key=xvz1evFS4wEEPTGEFPHBog&oauth_nonce=kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1318622958&oauth_token=370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb&oauth_version=1.0&status=Hello%20Ladies%20%2B%20Gentlemen%2C%20a%20signed%20OAuth%20request%21]])
 assert(request.oauth.signature_base_string == [[
