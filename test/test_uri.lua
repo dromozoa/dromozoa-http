@@ -17,12 +17,12 @@
 
 local http = require "dromozoa.http"
 
-local q = http.uri.query()
+local query = http.uri.query()
   :param("foo", 17)
   :param("bar", 23)
   :param("bar", 37)
   :param("baz", "日本語")
-assert(tostring(q) == "foo=17&bar=23&bar=37&baz=%E6%97%A5%E6%9C%AC%E8%AA%9E")
+assert(tostring(query) == "foo=17&bar=23&bar=37&baz=%E6%97%A5%E6%9C%AC%E8%AA%9E")
 assert(tostring(http.uri.query():param("foo", "'()")) == "foo=%27%28%29")
 assert("?" .. tostring(http.uri.query():param("foo", "bar")) == "?foo=bar")
 

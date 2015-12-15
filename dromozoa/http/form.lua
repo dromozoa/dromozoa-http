@@ -39,7 +39,7 @@ end
 
 function class.decode(s)
   local result = parameters()
-  for param in tostring(s):split("%&"):each() do
+  for param in split(s, "%&"):each() do
     local name, value = param:match("^([^%=]*)%=(.*)")
     if name == nil then
       result:param(uri.decode(param), "")
@@ -47,6 +47,7 @@ function class.decode(s)
       result:param(uri.decode(name), uri.decode(value))
     end
   end
+  return result
 end
 
 return class
