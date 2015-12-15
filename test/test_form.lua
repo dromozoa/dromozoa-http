@@ -15,20 +15,18 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local aws4 = require "dromozoa.http.aws4"
-local form = require "dromozoa.http.form"
-local oauth = require "dromozoa.http.oauth"
-local request = require "dromozoa.http.request"
-local uri = require "dromozoa.http.uri"
-local user_agent = require "dromozoa.http.user_agent"
+local http = require "dromozoa.http"
 
-local class = {
-  user_agent = user_agent;
-  request = request;
-  uri = uri;
-  form = form;
-  aws4 = aws4;
-  oauth = oauth;
-}
+local content = http.request("POST", http.uri("http", "localhost", "/"))
+  :param({
+    foo = " &=";
+    bar = "日本語";
+  })
+  :build()
+content = content .. "&baz&=qux"
 
-return class
+local form = http.form.decode(content):to_map()
+assert(form.foo == " &=")
+assert(form.bar == "日本語")
+assert(form.baz == "")
+assert(form[""] == "qux")

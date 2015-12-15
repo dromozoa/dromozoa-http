@@ -33,7 +33,14 @@ assert(result.request_uri == cgi_path)
 assert(result.env.HTTP_HOST == cgi_host)
 assert(result.env.HTTP_USER_AGENT == "dromozoa-http")
 
-local uri = http.uri("http", cgi_host, cgi_path):param("foo", 17):param("bar", 23):param("bar", 37):param("baz", "日本語")
+-- local uri = http.uri("http", cgi_host, cgi_path):param("foo", 17):param("bar", 23):param("bar", 37):param("baz", "日本語")
+local uri = http.uri("http", cgi_host, cgi_path)
+  :param("bar", 23)
+  :param({
+    foo = 17;
+    bar = 37;
+    baz = "日本語";
+  })
 local request = http.request("GET", uri)
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, {
@@ -120,4 +127,15 @@ assert(response.content == nil)
 local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
 assert(not ua:request(request))
 
+local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
+assert(not ua:request(request))
 
+local request = http.request("POST", http.uri("http", cgi_host, cgi_path))
+  :header({
+    ["X-Foo"] = 42;
+    ["X-Bar"] = 69;
+  })
+local response = assert(ua:request(request))
+local result = assert(json.decode(assert(ua:request(request)).content))
+assert(result.env.HTTP_X_FOO == "42")
+assert(result.env.HTTP_X_BAR == "69")

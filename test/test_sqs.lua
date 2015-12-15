@@ -34,14 +34,14 @@ local version = "2012-11-05"
 local ua = http:user_agent()
 ua:agent("dromozoa-http")
 
-local aws4 = http.aws4("ap-northeast-1", "sqs")
+local aws4 = http.aws4("ap-northeast-1", "sqs", access_key_id)
 
 local uri = http.uri(scheme, host, "/")
     :param("Action", "GetQueueUrl")
     :param("QueueName", queue)
     :param("Version", version)
 local request = http.request("GET", uri)
-aws4:sign_header(request, access_key_id, secret_access_key)
+aws4:sign_header(request, secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "text/xml")

@@ -15,50 +15,39 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local empty = require "dromozoa.commons.empty"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
+local split = require "dromozoa.commons.split"
 local uri = require "dromozoa.commons.uri"
-local query = require "dromozoa.http.query"
+local parameters = require "dromozoa.http.parameters"
 
-local class = {
-  query = query;
-}
-
-function class.new(scheme, authority, path)
-  return {
-    scheme = scheme;
-    authority = authority;
-    path = path;
-    params = query();
-  }
+local function encode(name, value)
+  return uri.encode_html5(name) .. "=" .. uri.encode_html5(value)
 end
 
-function class:param(...)
-  self.params:param(...)
-  return self
-end
+local class = {}
 
-function class:without_query()
-  return class(self.scheme, self.authority, self.path)
-end
-
-local metatable = {
-  __index = class;
-}
-
-function metatable:__tostring()
-  local params = self.params
+function class.encode(params)
   local out = sequence_writer()
-  out:write(self.scheme, "://", self.authority, self.path)
-  if not empty(params) then
-    out:write("?", tostring(params))
+  for name, value, i in params:each() do
+    if i > 1 then
+      out:write("&")
+    end
+    out:write(encode(name, value))
   end
   return out:concat()
 end
 
-return setmetatable(class, {
-  __index = uri;
-  __call = function (_, scheme, authority, path)
-    return setmetatable(class.new(scheme, authority, path), metatable)
-  end;
-})
+function class.decode(s)
+  local result = parameters()
+  for param in split(s, "%&"):each() do
+    local name, value = param:match("^([^%=]*)%=(.*)")
+    if name == nil then
+      result:param(uri.decode(param), "")
+    else
+      result:param(uri.decode(name), uri.decode(value))
+    end
+  end
+  return result
+end
+
+return class

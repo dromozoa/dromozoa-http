@@ -1,0 +1,55 @@
+#! /usr/bin/env lua
+
+-- Copyright (C) 2015 Tomoyuki Fujimori <moyu@dromozoa.com>
+--
+-- This file is part of dromozoa-http.
+--
+-- dromozoa-http is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- dromozoa-http is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
+
+local http = require "dromozoa.http"
+
+local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
+local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
+
+local token, token_secret, pin = ...
+
+local scheme = "https"
+local host = "api.twitter.com"
+
+local ua = http.user_agent():fail():verbose(false)
+
+local oauth = http.oauth(consumer_key, token)
+if pin == nil then
+  oauth.callback = "oob"
+  local uri = http.uri(scheme, host, "/oauth/request_token")
+  local request = http.request("POST", uri)
+  oauth:sign_header(request, consumer_secret, token_secret)
+  local response = assert(ua:request(request))
+  -- print(response.content)
+  local form = http.form.decode(response.content):to_map()
+  local uri = http.uri(scheme, host, "/oauth/authorize")
+    :param("oauth_token", form.oauth_token)
+  io.write(tostring(uri), "\n")
+  io.write(form.oauth_token, " ", form.oauth_token_secret, "\n")
+else
+  local uri = http.uri(scheme, host, "/oauth/access_token")
+  local request = http.request("POST", uri)
+    :param("oauth_verifier", pin)
+  oauth:sign_header(request, consumer_secret, token_secret)
+  local response = assert(ua:request(request))
+  -- print(response.content)
+  local form = http.form.decode(response.content):to_map()
+  io.write("TWITTER_ACCESS_TOKEN=", form.oauth_token, " ")
+  io.write("TWITTER_ACCESS_TOKEN_SECRET=", form.oauth_token_secret, "\n")
+end

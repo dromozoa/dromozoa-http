@@ -15,50 +15,44 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local empty = require "dromozoa.commons.empty"
 local sequence_writer = require "dromozoa.commons.sequence_writer"
 local uri = require "dromozoa.commons.uri"
-local query = require "dromozoa.http.query"
+local parameters = require "dromozoa.http.parameters"
 
-local class = {
-  query = query;
-}
-
-function class.new(scheme, authority, path)
-  return {
-    scheme = scheme;
-    authority = authority;
-    path = path;
-    params = query();
-  }
+local function encode(name, value)
+  return uri.encode(name) .. "=" .. uri.encode(value)
 end
 
-function class:param(...)
-  self.params:param(...)
+local function compare(a, b)
+  return encode(a[1], a[2]) < encode(b[1], b[2])
+end
+
+local class = {}
+
+function class:sort()
+  parameters.sort(self, compare)
   return self
-end
-
-function class:without_query()
-  return class(self.scheme, self.authority, self.path)
 end
 
 local metatable = {
   __index = class;
+  __pairs = parameters.each;
 }
 
 function metatable:__tostring()
-  local params = self.params
   local out = sequence_writer()
-  out:write(self.scheme, "://", self.authority, self.path)
-  if not empty(params) then
-    out:write("?", tostring(params))
+  for name, value, i in self:each() do
+    if i > 1 then
+      out:write("&")
+    end
+    out:write(encode(name, value))
   end
   return out:concat()
 end
 
 return setmetatable(class, {
-  __index = uri;
-  __call = function (_, scheme, authority, path)
-    return setmetatable(class.new(scheme, authority, path), metatable)
+  __index = parameters;
+  __call = function ()
+    return setmetatable(class.new(), metatable)
   end;
 })

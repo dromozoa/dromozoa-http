@@ -15,9 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence = require "dromozoa.commons.sequence"
-local sequence_writer = require "dromozoa.commons.sequence_writer"
-local uri = require "dromozoa.commons.uri"
+local form = require "dromozoa.http.form"
+local parameters = require "dromozoa.http.parameters"
 
 local class = {}
 
@@ -31,9 +30,10 @@ function class.new(method, uri, content_type, content)
     options = {};
     method = method;
     uri = uri;
-    headers = sequence();
+    headers = parameters();
     content_type = content_type;
     content = content;
+    params = parameters();
   }
 end
 
@@ -46,46 +46,20 @@ function class:save(filename)
   return self:option("save", filename)
 end
 
-function class:encode(encode)
-  return self:option("encode", encode)
-end
-
-function class:header(name, value)
-  assert(name ~= "Content-Type")
-  self.headers:push({ name, value })
+function class:header(...)
+  self.headers:param(...)
   return self
 end
 
-function class:param(name, value)
-  local params = self.params
-  if params == nil then
-    params = sequence()
-    self.params = params
-  end
-  params:push({ name, value })
+function class:param(...)
+  self.params:param(...)
   return self
 end
 
 function class:build()
   local content = self.content
-  local params = self.params
-  if self.content_type ~= "multipart/form-data" and content == nil and params ~= nil then
-    local encode = self.options.encode
-    if encode == nil then
-      encode = uri.encode_html5
-    end
-    local out = sequence_writer()
-    local first = true
-    for param in params:each() do
-      local name, value = param[1], param[2]
-      if first then
-        first = false
-      else
-        out:write("&")
-      end
-      out:write(encode(name), "=", encode(value))
-    end
-    content = out:concat()
+  if self.content_type ~= "multipart/form-data" and content == nil then
+    content = form.encode(self.params)
     self.content = content
   end
   return content

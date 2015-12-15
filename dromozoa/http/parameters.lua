@@ -15,56 +15,49 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local ipairs = require "dromozoa.commons.ipairs"
+local linked_hash_table = require "dromozoa.commons.linked_hash_table"
+local pairs = require "dromozoa.commons.pairs"
 local sequence = require "dromozoa.commons.sequence"
-local sequence_writer = require "dromozoa.commons.sequence_writer"
-local uri = require "dromozoa.commons.uri"
 
-local encode = uri.encode
+local class = {}
 
-local class = {
-  encode = encode;
-}
-
-function class.new()
-  return {}
-end
-
-function class:param(name, value)
-  local params = self.params
-  if params == nil then
-    params = sequence()
-    self.params = params
+function class:param(that, value)
+  if type(that) == "table" then
+    for name, value in pairs(that) do
+      self:push({ name, value })
+    end
+  else
+    self:push({ that, value })
   end
-  params:push({ name, value })
   return self
 end
 
-function class:build()
-  local params = self.params
-  if params == nil then
-    return nil
-  else
-    local out = sequence_writer()
-    local first = true
-    for param in params:each() do
-      local name, value = param[1], param[2]
-      if first then
-        first = false
-      else
-        out:write("&")
-      end
-      out:write(encode(name), "=", encode(value))
+function class:each()
+  return coroutine.wrap(function ()
+    for i, param in ipairs(self) do
+      coroutine.yield(param[1], param[2], i)
     end
-    return out:concat()
+  end)
+end
+
+function class:to_map(that)
+  if that == nil then
+    that = linked_hash_table()
   end
+  for name, value in self:each() do
+    that[name] = value
+  end
+  return that
 end
 
 local metatable = {
   __index = class;
-  __tostring = class.build;
+  __pairs = class.each;
 }
 
 return setmetatable(class, {
+  __index = sequence;
   __call = function ()
     return setmetatable(class.new(), metatable)
   end;

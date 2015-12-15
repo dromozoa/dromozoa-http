@@ -17,79 +17,43 @@
 
 local base64 = require "dromozoa.commons.base64"
 local json = require "dromozoa.commons.json"
-local sequence = require "dromozoa.commons.sequence"
-local sequence_writer = require "dromozoa.commons.sequence_writer"
-local sha1 = require "dromozoa.commons.sha1"
 local http = require "dromozoa.http"
-local oauth = require "dromozoa.http.oauth"
 
-local ua = http.user_agent():fail():verbose()
+local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
+local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
+local access_token = os.getenv("TWITTER_ACCESS_TOKEN")
+local access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+if consumer_key == nil then
+  io.stderr:write("no consumer key\n")
+  os.exit()
+end
+if access_token == nil then
+  io.stderr:write("no access token\n")
+  os.exit()
+end
 
 local scheme = "https"
 local host = "api.twitter.com"
-local consumer_secret = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw"
-local oauth_token_secret = "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
+local status_id = "663588769828724736"
 
-local uri = http.uri(scheme, host, "/1/statuses/update.json")
-  :param("include_entities", "true")
-local request = http.request("POST", uri)
-  :encode(http.uri.encode)
-  :param("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
-request:build()
-assert(request.content == [[
-status=Hello%20Ladies%20%2B%20Gentlemen%2C%20a%20signed%20OAuth%20request%21]])
+local ua = http.user_agent():fail():verbose(false)
 
-local params = sequence()
-params:push({ "oauth_consumer_key", "xvz1evFS4wEEPTGEFPHBog" })
-params:push({ "oauth_nonce", "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg" })
-params:push({ "oauth_signature_method", "HMAC-SHA1" })
-params:push({ "oauth_timestamp", "1318622958" })
-params:push({ "oauth_token", "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb" })
-params:push({ "oauth_version", "1.0" })
-for param in request.uri.query.params:each() do
-  params:push({ param[1], param[2] })
-end
-for param in request.params:each() do
-  params:push({ param[1], param[2] })
-end
+local uri = http.uri(scheme, host, "/1.1/statuses/show.json")
+  :param("id", status_id)
+  :param("trim_user", "true")
+local request = http.request("GET", uri)
+http.oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
+local response = assert(ua:request(request))
+local result = json.decode(response.content)
 
-for param in params:each() do
-  param[1] = http.uri.encode(param[1])
-  param[2] = http.uri.encode(param[2])
-end
-params:sort(function (a, b) return a[1] < b[1] end)
+assert(result.id_str == status_id)
+assert(result.text:find("^不惑や知命"))
+assert(result.source:find("Twitter for iPhone"))
 
-local out = sequence_writer()
-local first = true
-for param in params:each() do
-  if first then
-    first = false
-  else
-    out:write("&")
-  end
-  out:write(param[1], "=", param[2])
-end
-local parameter_string = out:concat()
-assert(parameter_string == [[
-include_entities=true&oauth_consumer_key=xvz1evFS4wEEPTGEFPHBog&oauth_nonce=kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1318622958&oauth_token=370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb&oauth_version=1.0&status=Hello%20Ladies%20%2B%20Gentlemen%2C%20a%20signed%20OAuth%20request%21]])
-
-local signature_base_string
-    = request.method:upper()
-    .. "&"
-    .. http.uri.encode(request.uri.scheme .. "://" .. request.uri.authority .. request.uri.path)
-    .. "&"
-    .. http.uri.encode(parameter_string)
-assert(signature_base_string == [[
-POST&https%3A%2F%2Fapi.twitter.com%2F1%2Fstatuses%2Fupdate.json&include_entities%3Dtrue%26oauth_consumer_key%3Dxvz1evFS4wEEPTGEFPHBog%26oauth_nonce%3DkYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1318622958%26oauth_token%3D370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb%26oauth_version%3D1.0%26status%3DHello%2520Ladies%2520%252B%2520Gentlemen%252C%2520a%2520signed%2520OAuth%2520request%2521]])
-
-local signing_key = http.uri.encode(consumer_secret) .. "&" .. http.uri.encode(oauth_token_secret)
-assert(signing_key == [[
-kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE]])
-
-local oauth_signature = base64.encode(sha1.hmac(signing_key, signature_base_string, "bin"))
-assert(oauth_signature == [[
-tnnArxj06cWHq44gCs1OSKk/jLY=]])
-
-local a = oauth():reset()
--- print(json.encode(a))
-print(a.oauth_nonce)
+-- local uri = http.uri(scheme, host, "/1.1/statuses/update.json")
+-- local request = http.request("POST", uri)
+--   :param("status", "@vaporoid ファイトだよ！")
+-- http.oauth(consumer_key, access_token):sign_header(request, consumer_secret, access_token_secret)
+-- print(request.oauth.signature_base_string)
+-- local response = assert(ua:request(request))
