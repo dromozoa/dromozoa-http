@@ -18,34 +18,38 @@
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
 local http = require "dromozoa.http"
-local oauth = require "dromozoa.http.oauth"
 
 local consumer_key = os.getenv("TWITTER_CONSUMER_KEY")
 local consumer_secret = os.getenv("TWITTER_CONSUMER_SECRET")
 
-local pin, access_token, access_token_secret = ...
+local token, token_secret, pin = ...
 
 local scheme = "https"
 local host = "api.twitter.com"
 
-local ua = http.user_agent():fail():verbose()
+local ua = http.user_agent():fail():verbose(false)
 
-local oa = oauth(consumer_key, access_token)
-
+local oauth = http.oauth(consumer_key, token)
 if pin == nil then
-  oa:param("callback", "oob")
+  oauth.callback = "oob"
   local uri = http.uri(scheme, host, "/oauth/request_token")
   local request = http.request("POST", uri)
-  oa:sign_header(request, consumer_secret, access_token_secret)
-  -- print(request.oauth.signature_base_string)
+  oauth:sign_header(request, consumer_secret, token_secret)
   local response = assert(ua:request(request))
-  print(response.content)
+  -- print(response.content)
+  local form = http.form.decode(response.content):to_map()
+  local uri = http.uri(scheme, host, "/oauth/authorize")
+    :param("oauth_token", form.oauth_token)
+  io.write(tostring(uri), "\n")
+  io.write(form.oauth_token, " ", form.oauth_token_secret, "\n")
 else
   local uri = http.uri(scheme, host, "/oauth/access_token")
   local request = http.request("POST", uri)
     :param("oauth_verifier", pin)
-  oa:sign_header(request, consumer_secret, access_token_secret)
-  -- print(request.oauth.signature_base_string)
+  oauth:sign_header(request, consumer_secret, token_secret)
   local response = assert(ua:request(request))
-  print(response.content)
+  -- print(response.content)
+  local form = http.form.decode(response.content):to_map()
+  io.write("TWITTER_ACCESS_TOKEN=", form.oauth_token, " ")
+  io.write("TWITTER_ACCESS_TOKEN_SECRET=", form.oauth_token_secret, "\n")
 end
