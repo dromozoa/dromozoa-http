@@ -19,6 +19,7 @@ local http = require "dromozoa.http"
 
 local access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 local secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+local security_token = os.getenv("AWS_SECURITY_TOKEN")
 
 if access_key_id == nil then
   io.stderr:write("no access key id\n")
@@ -31,13 +32,14 @@ local host = bucket .. ".s3-ap-northeast-1.amazonaws.com"
 
 local ua = http:user_agent()
 ua:agent("dromozoa-http")
--- ua:verbose()
+ua:verbose()
 
-local aws4 = http.aws4("ap-northeast-1", "s3", access_key_id)
+local aws4 = http.aws4("ap-northeast-1", "s3", access_key_id, security_token)
 
 local request = http.request("GET", http.uri(scheme, host, "/"))
 aws4:sign_header(request, secret_access_key)
 local response = ua:request(request)
+print(response.content)
 assert(response.code == 200)
 assert(response.content_type == "application/xml")
 
