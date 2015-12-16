@@ -15,48 +15,42 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local json = require "dromozoa.commons.json"
+local read_file = require "dromozoa.commons.read_file"
 local http = require "dromozoa.http"
 
-local access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
-local secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-if access_key_id == nil then
-  io.stderr:write("no access key id\n")
-  os.exit()
-end
+local credentials = json.decode(assert(read_file("test-credentials.json")))
 
 local scheme = "https"
 local bucket = "dromozoa"
 local host = bucket .. ".s3-ap-northeast-1.amazonaws.com"
 
-local ua = http:user_agent()
-ua:agent("dromozoa-http")
--- ua:verbose()
-
-local aws4 = http.aws4("ap-northeast-1", "s3", access_key_id)
+local ua = http.user_agent("dromozoa-http")
+local aws4 = http.aws4("ap-northeast-1", "s3", credentials.access_key_id, credentials.session_token)
 
 local request = http.request("GET", http.uri(scheme, host, "/"))
-aws4:sign_header(request, secret_access_key)
+aws4:sign_header(request, credentials.secret_access_key)
 local response = ua:request(request)
+-- print(response.content)
 assert(response.code == 200)
 assert(response.content_type == "application/xml")
 
 local request = http.request("GET", http.uri(scheme, host, "/foo.txt"))
-aws4:sign_header(request, secret_access_key)
+aws4:sign_header(request, credentials.secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "foo\n")
 
 local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 local request = http.request("PUT", http.uri(scheme, host, "/qux.txt"), "text/plain; charset=UTF-8", "日本語\n" .. timestamp .. "\n")
-aws4:sign_header(request, secret_access_key)
+aws4:sign_header(request, credentials.secret_access_key)
 -- print(request.aws4.canonical_request)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content == "")
 
 local request = http.request("GET", http.uri(scheme, host, "/qux.txt"))
-aws4:sign_header(request, secret_access_key)
+aws4:sign_header(request, credentials.secret_access_key)
 local response = ua:request(request)
 assert(response.code == 200)
 assert(response.content_type == "text/plain; charset=UTF-8")

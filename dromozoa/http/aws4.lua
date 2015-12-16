@@ -26,11 +26,12 @@ end
 
 local class = {}
 
-function class.new(region, service, access_key_id)
+function class.new(region, service, access_key_id, security_token)
   return {
     region = region;
     service = service;
     access_key_id = access_key_id;
+    security_token = security_token;
   }
 end
 
@@ -57,6 +58,10 @@ function class:build(request)
   request
     :header("x-amz-content-sha256", content_sha256)
     :header("x-amz-date", self.datetime)
+  local security_token = self.security_token
+  if security_token ~= nil then
+    request:header("x-amz-security-token", security_token)
+  end
   return self
 end
 
@@ -163,7 +168,7 @@ local metatable = {
 }
 
 return setmetatable(class, {
-  __call = function (_, region, service, access_key_id)
-    return setmetatable(class.new(region, service, access_key_id), metatable)
+  __call = function (_, region, service, access_key_id, security_token)
+    return setmetatable(class.new(region, service, access_key_id, security_token), metatable)
   end;
 })
