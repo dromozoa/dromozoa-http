@@ -190,7 +190,8 @@ function class:request(request)
 
   local command = commands:concat(" ")
   if verbose then
-    io.stderr:write(command, "\n"):flush()
+    io.stderr:write(command, "\n")
+    io.stderr:flush()
   end
   local result, what, code = shell.eval(command)
 
