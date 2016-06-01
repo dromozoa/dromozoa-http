@@ -1,8 +1,8 @@
 package = "dromozoa-http"
-version = "1.8-1"
+version = "1.9-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.8.tar.gz";
-  file = "dromozoa-http-1.8.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.9.tar.gz";
+  file = "dromozoa-http-1.9.tar.gz";
 }
 description = {
   summary = "Portable HTTP client";
