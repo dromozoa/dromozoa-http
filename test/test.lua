@@ -1,4 +1,4 @@
--- Copyright (C) 2015 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2015,2017 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-http.
 --
@@ -25,6 +25,7 @@ local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
 local cgi_uri = "http://" .. cgi_host .. cgi_path
 
 local ua = http.user_agent("dromozoa-http"):fail()
+ua:connect_timeout(10):max_time(10)
 
 local request = http.request("GET", cgi_uri)
 local result = assert(json.decode(assert(ua:request(request)).content))
