@@ -1,4 +1,4 @@
--- Copyright (C) 2015 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2015-2017 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-http.
 --
@@ -70,6 +70,14 @@ function class:verbose(enabled)
   return self:option("verbose", enabled)
 end
 
+function class:connect_timeout(value)
+  return self:option("connect_timeout", value)
+end
+
+function class:max_time(value)
+  return self:option("max_time", value)
+end
+
 function class:request(request)
   request:build()
 
@@ -80,6 +88,8 @@ function class:request(request)
   local password = options.password
   local fail = options.fail
   local verbose = options.verbose
+  local connect_timeout = options.connect_timeout
+  local max_time = options.max_time
 
   local request_options = request.options
   local save = request_options.save
@@ -132,6 +142,13 @@ function class:request(request)
     commands:push("--verbose")
   else
     commands:push("--silent")
+  end
+
+  if connect_timeout then
+    commands:push("--connect-timeout", shell.quote(connect_timeout))
+  end
+  if max_time then
+    commands:push("--max-time", shell.quote(max_time))
   end
 
   if method == "HEAD" then
