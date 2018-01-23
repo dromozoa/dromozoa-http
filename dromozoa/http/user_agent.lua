@@ -70,6 +70,13 @@ function class:verbose(enabled)
   return self:option("verbose", enabled)
 end
 
+function class:insecure(enabled)
+  if enabled == nil then
+    enabled = true
+  end
+  return self:option("insecure", enabled)
+end
+
 function class:connect_timeout(value)
   return self:option("connect_timeout", value)
 end
@@ -88,6 +95,7 @@ function class:request(request)
   local password = options.password
   local fail = options.fail
   local verbose = options.verbose
+  local insecure = options.insecure
   local connect_timeout = options.connect_timeout
   local max_time = options.max_time
 
@@ -142,6 +150,10 @@ function class:request(request)
     commands:push("--verbose")
   else
     commands:push("--silent")
+  end
+
+  if insecure then
+    commands:push("--insecure")
   end
 
   if connect_timeout then

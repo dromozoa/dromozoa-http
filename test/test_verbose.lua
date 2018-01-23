@@ -17,7 +17,7 @@
 
 local http = require "dromozoa.http"
 
-local ua = http.user_agent():fail():verbose()
+local ua = http.user_agent():fail():verbose():insecure()
 local request = http.request("GET", "http://localhost/")
 local response = assert(ua:request(request))
 print(response.content)
