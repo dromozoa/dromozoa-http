@@ -22,7 +22,10 @@ case x$1 in
   *) lua=$1;;
 esac
 
-"$lua" test/sts "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" >test-credentials.json
+case x$AWS_SECRET_ACCESS_KEY in
+  x) ;;
+  *) "$lua" test/sts "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" >test-credentials.json;;
+esac
 for i in test/test*.lua
 do
   "$lua" "$i"

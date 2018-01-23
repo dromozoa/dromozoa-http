@@ -19,6 +19,12 @@ local json = require "dromozoa.commons.json"
 local read_file = require "dromozoa.commons.read_file"
 local http = require "dromozoa.http"
 
+local handle = io.open "test-credentials.json"
+if not handle then
+  os.exit()
+end
+handle:close()
+
 local credentials = json.decode(assert(read_file("test-credentials.json")))
 
 local scheme = "https"
