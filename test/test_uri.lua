@@ -1,4 +1,4 @@
--- Copyright (C) 2015 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2015,2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-http.
 --
@@ -26,12 +26,12 @@ assert(tostring(query) == "foo=17&bar=23&bar=37&baz=%E6%97%A5%E6%9C%AC%E8%AA%9E"
 assert(tostring(http.uri.query():param("foo", "'()")) == "foo=%27%28%29")
 assert("?" .. tostring(http.uri.query():param("foo", "bar")) == "?foo=bar")
 
-local uri = http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi")
-assert(tostring(uri) == "http://localhost/cgi-bin/dromozoa-http-test.cgi")
+local uri = http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi")
+assert(tostring(uri) == "https://kotori.dromozoa.com/cgi-bin/dromozoa-http-test.cgi")
 
-local uri = http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi")
+local uri = http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi")
   :param("foo", 17):param("bar", 23)
-assert(tostring(uri) == "http://localhost/cgi-bin/dromozoa-http-test.cgi?foo=17&bar=23")
+assert(tostring(uri) == "https://kotori.dromozoa.com/cgi-bin/dromozoa-http-test.cgi?foo=17&bar=23")
 
-local uri = http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi"):param("foo", 17):param("bar", 23)
-assert(tostring(uri) == "http://localhost/cgi-bin/dromozoa-http-test.cgi?foo=17&bar=23")
+local uri = http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi"):param("foo", 17):param("bar", 23)
+assert(tostring(uri) == "https://kotori.dromozoa.com/cgi-bin/dromozoa-http-test.cgi?foo=17&bar=23")

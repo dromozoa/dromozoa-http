@@ -1,8 +1,9 @@
+rockspec_format = "3.0"
 package = "dromozoa-http"
-version = "1.11-1"
+version = "1.12-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.11.tar.gz";
-  file = "dromozoa-http-1.11.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-http/archive/v1.12.tar.gz";
+  file = "dromozoa-http-1.12.tar.gz";
 }
 description = {
   summary = "Portable HTTP client";
@@ -12,6 +13,10 @@ description = {
 }
 dependencies = {
   "dromozoa-commons";
+}
+test = {
+  type = "command";
+  command = "./test.sh";
 }
 build = {
   type = "builtin";

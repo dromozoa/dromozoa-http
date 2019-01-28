@@ -1,4 +1,4 @@
--- Copyright (C) 2015-2017 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2015-2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-http.
 --
@@ -85,6 +85,15 @@ function class:max_time(value)
   return self:option("max_time", value)
 end
 
+function class:proxy(value)
+  return self:option("proxy", value)
+end
+
+function class:noproxy(value)
+  return self:option("noproxy", value)
+end
+
+
 function class:request(request)
   request:build()
 
@@ -98,6 +107,8 @@ function class:request(request)
   local insecure = options.insecure
   local connect_timeout = options.connect_timeout
   local max_time = options.max_time
+  local proxy = options.proxy
+  local noproxy = options.noproxy
 
   local request_options = request.options
   local save = request_options.save
@@ -161,6 +172,12 @@ function class:request(request)
   end
   if max_time then
     commands:push("--max-time", shell.quote(max_time))
+  end
+  if proxy then
+    commands:push("--proxy", shell.quote(proxy))
+  end
+  if noproxy then
+    commands:push("--noproxy", shell.quote(noproxy))
   end
 
   if method == "HEAD" then
