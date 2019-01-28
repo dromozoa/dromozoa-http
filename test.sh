@@ -17,17 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
-case x$1 in
-  x) lua=lua;;
-  *) lua=$1;;
-esac
+LUA_PATH="?.lua;;"
+export LUA_PATH
 
 case x$AWS_SECRET_ACCESS_KEY in
   x) ;;
-  *) "$lua" test/sts "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" >test-credentials.json;;
+  *)
+    case X$# in
+      X0) lua test/sts "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" >test-credentials.json;;
+      *) "$@" test/sts "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" >test-credentials.json;;
+    esac;;
 esac
+
 for i in test/test*.lua
 do
-  "$lua" "$i"
+  case X$# in
+    X0) lua "$i";;
+    *) "$@" "$i";;
+  esac
 done
+
 rm -f test*.json
