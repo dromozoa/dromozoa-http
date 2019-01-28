@@ -20,9 +20,9 @@ local json = require "dromozoa.commons.json"
 local write_file = require "dromozoa.commons.write_file"
 local http = require "dromozoa.http"
 
-local cgi_host = "localhost"
+local cgi_host = "kotori.dromozoa.com"
 local cgi_path = "/cgi-bin/dromozoa-http-test.cgi"
-local cgi_uri = "http://" .. cgi_host .. cgi_path
+local cgi_uri = "https://" .. cgi_host .. cgi_path
 
 local ua = http.user_agent("dromozoa-http"):fail()
 ua:connect_timeout(10):max_time(10)
@@ -35,7 +35,7 @@ assert(result.env.HTTP_HOST == cgi_host)
 assert(result.env.HTTP_USER_AGENT == "dromozoa-http")
 
 -- local uri = http.uri("http", cgi_host, cgi_path):param("foo", 17):param("bar", 23):param("bar", 37):param("baz", "日本語")
-local uri = http.uri("http", cgi_host, cgi_path)
+local uri = http.uri("https", cgi_host, cgi_path)
   :param("bar", 23)
   :param({
     foo = 17;
@@ -114,24 +114,24 @@ assert(response.code == 200)
 assert(response.content_type == "application/json; charset=UTF-8")
 assert(response.content == "")
 
-local request = http.request("GET", http.uri("http", "localhost", cgi_path):param("test", "日本語"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", cgi_path):param("test", "日本語"))
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.params, { test = { "日本語" } }))
 
-local request = http.request("GET", http.uri("http", "localhost", cgi_path))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", cgi_path))
 request:save("test.json")
 local response = assert(ua:request(request))
 assert(response.code == 200)
 assert(response.content_type == "application/json; charset=UTF-8")
 assert(response.content == nil)
 
-local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", "/no_such_file_or_directory"))
 assert(not ua:request(request))
 
-local request = http.request("GET", http.uri("http", "localhost", "/no_such_file_or_directory"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", "/no_such_file_or_directory"))
 assert(not ua:request(request))
 
-local request = http.request("POST", http.uri("http", cgi_host, cgi_path))
+local request = http.request("POST", http.uri("https", cgi_host, cgi_path))
   :header({
     ["X-Foo"] = 42;
     ["X-Bar"] = 69;

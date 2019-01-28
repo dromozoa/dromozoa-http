@@ -21,14 +21,14 @@ local http = require "dromozoa.http"
 
 local ua = http.user_agent():cookie()
 
-local request = http.request("GET", http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi/set-cookie/foo/42"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi/set-cookie/foo/42"))
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(result.cookies == nil)
 
-local request = http.request("GET", http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi/set-cookie/foo/69"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi/set-cookie/foo/69"))
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.cookies, { foo = "42" }))
 
-local request = http.request("GET", http.uri("http", "localhost", "/cgi-bin/dromozoa-http-test.cgi"))
+local request = http.request("GET", http.uri("https", "kotori.dromozoa.com", "/cgi-bin/dromozoa-http-test.cgi"))
 local result = assert(json.decode(assert(ua:request(request)).content))
 assert(equal(result.cookies, { foo = "69" }))

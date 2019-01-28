@@ -18,6 +18,6 @@
 local http = require "dromozoa.http"
 
 local ua = http.user_agent():fail():verbose():insecure()
-local request = http.request("GET", "http://localhost/")
+local request = http.request("GET", "https://dromozoa.com/")
 local response = assert(ua:request(request))
 print(response.content)

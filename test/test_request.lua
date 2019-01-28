@@ -17,7 +17,7 @@
 
 local http = require "dromozoa.http"
 
-local request = http.request("POST", "http://localhost/")
+local request = http.request("POST", "https://kotori.dromozoa.com/")
 assert(request.content_type == "application/x-www-form-urlencoded")
 request:param("foo", 17):param("bar", 23):param("bar", 37)
 assert(request.content == nil)
@@ -26,14 +26,14 @@ assert(request.content == "foo=17&bar=23&bar=37")
 request:build()
 assert(request.content == "foo=17&bar=23&bar=37")
 
-local request = http.request("POST", "http://localhost/")
+local request = http.request("POST", "https://kotori.dromozoa.com/")
   :param("foo", " ")
   :param("bar", "&=")
   :param("baz", "09AZaz")
   :param("qux", "日本語")
 assert(request:build() == "foo=+&bar=%26%3D&baz=09AZaz&qux=%E6%97%A5%E6%9C%AC%E8%AA%9E")
 
-local request = http.request("POST", "http://localhost/")
+local request = http.request("POST", "https://kotori.dromozoa.com/")
   :param({
     foo = " ";
     bar = "&=";

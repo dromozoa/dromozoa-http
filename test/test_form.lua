@@ -17,7 +17,7 @@
 
 local http = require "dromozoa.http"
 
-local content = http.request("POST", http.uri("http", "localhost", "/"))
+local content = http.request("POST", http.uri("https", "kotori.dromozoa.com", "/"))
   :param({
     foo = " &=";
     bar = "日本語";
