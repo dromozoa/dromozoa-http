@@ -1,4 +1,4 @@
--- Copyright (C) 2015,2019 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-http.
 --
@@ -15,18 +15,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-http.  If not, see <http://www.gnu.org/licenses/>.
 
+local json = require "dromozoa.commons.json"
 local http = require "dromozoa.http"
 
-local content = http.request("POST", http.uri("https", "kotori.dromozoa.com", "/"))
-  :param({
-    foo = " &=";
-    bar = "日本語";
-  })
-  :build()
-content = content .. "&baz&=qux"
+local proxy = os.getenv "DROMOZOA_PROXY"
+if not proxy then
+  return
+end
 
-local form = http.form.decode(content):to_map()
-assert(form.foo == " &=")
-assert(form.bar == "日本語")
-assert(form.baz == "")
-assert(form[""] == "qux")
+local ua = http.user_agent("dromozoa-http")
+  :fail()
+  :connect_timeout(10)
+  :max_time(10)
+  :proxy(proxy)
+
+local request = http.request("GET", "https://kotori.dromozoa.com/cgi-bin/dromozoa-http-test.cgi")
+assert(json.decode(assert(ua:request(request)).content))
